@@ -27,78 +27,49 @@ function playTurn(g, presses, draw = dealer()) {
   G.finishTurn(g);
 }
 
-test('tapping +1 twice keeps the point and deals the next card', () => {
+test('tapping the top word scores 1, the bottom word 3, and skip costs 1', () => {
   const g = newGame();
   const draw = dealer();
   G.startTurn(g, 0, draw);
-  assert.equal(G.act(g, 'one', draw), 'banked');
-  assert.equal(G.currentCard(g.turn).one, 'Word1');
-  assert.equal(G.act(g, 'one', draw), 'dealt');
-  assert.equal(G.currentCard(g.turn).one, 'Word2');
-  assert.deepEqual(G.turnPoints(g, g.turn), [1, 0]);
-});
-
-test('a card is worth 3 at most, banked or not', () => {
-  const g = newGame();
-  const draw = dealer();
-  G.startTurn(g, 0, draw);
-  G.act(g, 'one', draw);
+  assert.equal(G.act(g, 'one', draw), true);
+  assert.equal(G.currentCard(g.turn).one, 'Word2', 'every tap deals the next card');
   G.act(g, 'three', draw);
-  G.act(g, 'three', draw);
-  assert.deepEqual(G.turnPoints(g, g.turn), [6, 0]);
-});
-
-test('NO! gives the other team a point and wipes a banked point', () => {
-  const g = newGame();
-  const draw = dealer();
-  G.startTurn(g, 0, draw);
-  G.act(g, 'one', draw);
-  G.act(g, 'no', draw);
-  assert.deepEqual(G.turnPoints(g, g.turn), [0, 1]);
-});
-
-test('skips give the other team a point unless skips are free', () => {
-  const official = newGame();
-  playTurn(official, ['skip', 'skip']);
-  assert.deepEqual(G.scores(official), [0, 2]);
-
-  const casual = newGame({ settings: { skipPenalty: false } });
-  playTurn(casual, ['skip', 'skip']);
-  assert.deepEqual(G.scores(casual), [0, 0]);
-});
-
-test('skip after banking keeps the 1 point', () => {
-  const g = newGame();
-  const draw = dealer();
-  G.startTurn(g, 0, draw);
-  G.act(g, 'one', draw);
   G.act(g, 'skip', draw);
-  assert.equal(g.turn.cards[0].result, 'one');
+  assert.equal(G.turnPoints(g.turn), 1 + 3 - 1);
 });
 
-test('time running out keeps a banked point and scores nothing otherwise', () => {
-  const banked = newGame();
-  const draw = dealer();
-  G.startTurn(banked, 0, draw);
-  G.act(banked, 'one', draw);
-  G.endTurn(banked);
-  assert.equal(banked.turn.cards[0].result, 'one');
+test('only the poet team scores, and scores can go negative', () => {
+  const g = newGame();
+  playTurn(g, ['skip', 'skip', 'one']);
+  playTurn(g, ['three']);
+  assert.deepEqual(G.scores(g), [-1, 3]);
+});
 
-  const unbanked = newGame();
-  G.startTurn(unbanked, 0, dealer());
-  G.endTurn(unbanked);
-  assert.equal(unbanked.turn.cards[0].result, 'none');
-  assert.equal(unbanked.turn.cards[0].timedOut, true);
+test('unknown actions are ignored', () => {
+  const g = newGame();
+  const draw = dealer();
+  G.startTurn(g, 0, draw);
+  assert.equal(G.act(g, 'no', draw), false);
+  assert.equal(g.turn.cards.length, 1);
+});
+
+test('the card on screen when time runs out scores nothing', () => {
+  const g = newGame();
+  G.startTurn(g, 0, dealer());
+  G.endTurn(g);
+  assert.equal(g.turn.cards[0].result, 'none');
+  assert.equal(g.turn.cards[0].timedOut, true);
+  assert.equal(G.turnPoints(g.turn), 0);
 });
 
 test('undo restores the previous card and re-deals the card that was on screen', () => {
   const g = newGame();
   const draw = dealer();
   G.startTurn(g, 0, draw);
-  G.act(g, 'no', draw); // Word1 lost, Word2 on screen
+  G.act(g, 'skip', draw); // Word1 skipped, Word2 on screen
   assert.equal(G.undo(g), true);
   assert.equal(G.currentCard(g.turn).one, 'Word1');
-  assert.deepEqual(G.turnPoints(g, g.turn), [0, 0]);
+  assert.equal(G.turnPoints(g.turn), 0);
   G.act(g, 'three', draw);
   assert.equal(G.currentCard(g.turn).one, 'Word2', 'the put-back card comes next');
   G.act(g, 'three', draw);
@@ -109,22 +80,11 @@ test('undo after a re-deal does not duplicate the card', () => {
   const g = newGame();
   const draw = dealer();
   G.startTurn(g, 0, draw);
-  G.act(g, 'no', draw); // Word2 on screen
+  G.act(g, 'skip', draw); // Word2 on screen
   G.undo(g); // Word2 queued
-  G.act(g, 'skip', draw); // Word2 dealt from the queue
+  G.act(g, 'one', draw); // Word2 dealt from the queue
   G.undo(g); // Word2 queued again
   assert.deepEqual(g.turn.queue, [['Word2', 'Phrase2']]);
-});
-
-test('undo of a bank un-banks without touching the deck', () => {
-  const g = newGame();
-  const draw = dealer();
-  G.startTurn(g, 0, draw);
-  G.act(g, 'one', draw);
-  G.undo(g);
-  assert.equal(G.currentCard(g.turn).banked, false);
-  assert.equal(g.turn.queue.length, 0);
-  assert.equal(g.turn.cards.length, 1);
 });
 
 test('presses are ignored while paused', () => {
@@ -132,7 +92,7 @@ test('presses are ignored while paused', () => {
   const draw = dealer();
   G.startTurn(g, 0, draw);
   G.pause(g, 30_000);
-  assert.equal(G.act(g, 'three', draw), null);
+  assert.equal(G.act(g, 'three', draw), false);
   assert.equal(G.timeLeft(g.turn, 999_999), 60_000);
   G.resume(g, 100_000);
   assert.equal(G.timeLeft(g.turn, 110_000), 50_000);
@@ -142,11 +102,13 @@ test('review edits change the score before it is saved', () => {
   const g = newGame();
   const draw = dealer();
   G.startTurn(g, 0, draw);
-  G.act(g, 'no', draw);
+  G.act(g, 'skip', draw);
   G.endTurn(g);
   G.setResult(g, 0, 'three');
+  G.setResult(g, 1, 'one'); // guessed right on the buzzer
+  G.setResult(g, 1, 'bogus');
   G.finishTurn(g);
-  assert.deepEqual(G.scores(g), [3, 0]);
+  assert.deepEqual(G.scores(g), [4, 0]);
 });
 
 test('teams alternate and poets rotate within each team', () => {
@@ -217,22 +179,23 @@ test('rematch keeps teams, resets scores, restores planned rounds and swaps who 
   assert.equal(G.activeTeam(next), 1);
 });
 
-test('stats name the top poet, best turn and most bonked', () => {
+test('stats name the top poet, best turn and most skips', () => {
   const g = newGame({ gladPlayers: ['Ugg'], madPlayers: ['Bo'] });
   playTurn(g, ['three', 'one', 'one']);
-  playTurn(g, ['no', 'no', 'one', 'one']);
+  playTurn(g, ['skip', 'skip', 'one', 'one']);
   const s = G.stats(g);
   assert.equal(s.mvp.name, 'Ugg');
-  assert.equal(s.best.points, 4);
-  assert.equal(s.bonked.name, 'Bo');
-  assert.equal(s.bonked.nos, 2);
+  assert.equal(s.best.points, 5);
+  assert.equal(s.skipper.name, 'Bo');
+  assert.equal(s.skipper.skips, 2);
   assert.equal(s.threes, 1);
+  assert.equal(s.cards, 9, 'includes the card on screen at each buzzer');
 });
 
-test('restore rejects malformed saves', () => {
+test('restore rejects malformed and old-format saves', () => {
   assert.equal(G.restore(null), null);
-  assert.equal(G.restore({ v: 2 }), null);
-  assert.equal(G.restore({ v: 1, teams: [{}, {}], phase: 'turn', turn: null }), null);
+  assert.equal(G.restore({ v: 1, teams: [{}, {}], phase: 'ready' }), null);
+  assert.equal(G.restore({ v: 2, teams: [{}, {}], phase: 'turn', turn: null }), null);
   const g = newGame();
   assert.equal(G.restore(JSON.parse(JSON.stringify(g))).phase, 'ready');
 });

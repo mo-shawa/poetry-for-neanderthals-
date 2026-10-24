@@ -13,12 +13,13 @@ const TIME_UP_MS = 1600;
 
 const TIPS = [
   'Once your team says a word, you can say it too.',
-  'Got the 1 but the 3 is a stretch? Tap Next to keep your point.',
+  'Got the top word but think you can get the 3? Hold off and keep going.',
   'Judge: sit close and read every word on the card.',
   'Hands down. No acting, no pointing, no counting on fingers.',
-  'Tapped the wrong button? Undo puts the card back.',
+  'Tapped the wrong word? Undo puts the card back.',
   'After each turn you can fix any card before it counts.',
   'The 3-point word often has the 1-point word inside it.',
+  'Broke a rule? The judge yells NO! and the card counts as a skip.',
 ];
 
 const prefs = { sound: true, ...load('prefs', {}) };
@@ -53,6 +54,7 @@ const esc = (value) =>
   String(value).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
 const plural = (n, word, many = `${word}s`) => `${n} ${n === 1 ? word : many}`;
+const signed = (n) => (n < 0 ? `−${-n}` : `+${n}`);
 
 function fmtTime(ms) {
   const s = Math.ceil(ms / 1000);
@@ -68,10 +70,6 @@ const icons = {
   back: svg(`<path ${stroke} stroke-width="2.8" d="M15 5l-7 7 7 7"/>`),
   close: svg(`<path ${stroke} stroke-width="2.8" d="M6 6l12 12M18 6L6 18"/>`),
   home: svg(`<path ${stroke} d="M4 11l8-7 8 7v8.5a.5.5 0 0 1-.5.5H15v-6H9v6H4.5a.5.5 0 0 1-.5-.5z"/>`),
-  club: svg(
-    '<path d="M5 20.5l8-8" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>' +
-      '<path d="M12.3 6.3c1.5-2.6 5.4-3.3 7.3-1.2 1.9 2.1 1 6-1.7 7.6-2 1.2-3.9.7-5.1-.5-1.3-1.3-1.7-3.8-.5-5.9z"/>'
-  ),
 };
 
 const tally = (n) => `<span class="tally" aria-hidden="true">${'<i></i>'.repeat(n)}</span>`;
@@ -128,7 +126,7 @@ function usedIds(g) {
 function drawFromDeck() {
   const { card, reshuffled } = drawCard(CARDS, seen, usedIds(game));
   save('seen', [...seen]);
-  if (reshuffled) showToast('You have played every card. Shuffling the deck.');
+  if (reshuffled) showToast('You have played every card! The ones you saw longest ago are back.');
   return card;
 }
 
@@ -186,11 +184,15 @@ function render() {
   ui.fx = null;
 }
 
-/** Shrink display text until it fits its box (card words, team names). */
+/**
+ * Shrink display text until it fits its box (card words, team names). The CSS
+ * font-size is the largest size allowed.
+ */
 function fitText() {
   for (const el of app.querySelectorAll('[data-fit]')) {
+    el.style.fontSize = '';
     const boxHeight = 'fitHeight' in el.dataset ? el.clientHeight : Infinity;
-    let size = Number(el.dataset.fit);
+    let size = parseFloat(getComputedStyle(el).fontSize);
     if (boxHeight !== Infinity) size = Math.min(size, Math.floor(boxHeight * 0.8));
     el.style.fontSize = `${size}px`;
     while (size > 14 && (el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > boxHeight + 1)) {
@@ -215,8 +217,8 @@ function homeView() {
     <div class="scroll" data-key="home">
       <div class="home-hero">
         <h1 class="logo">
-          <span class="logo-small">Poetry for</span>
-          <span class="logo-big" data-fit="88">Neanderthals</span>
+          <span class="logo-big" data-fit>It Dog</span>
+          <span class="logo-small">Small words. Big laughs.</span>
         </h1>
         <p class="tagline">The party game where the poet may only speak in words of one syllable.</p>
         <figure class="demo" aria-label="Example card">
@@ -276,11 +278,6 @@ function setupView() {
             minutes ? `Each round, both teams play one turn. About ${minutes} minutes in all.` : 'Play as long as you like and end the game from the menu.'
           }</p>
         </section>
-        <label class="toggle-row" for="skip-penalty">
-          <span><b>Skips cost a point</b><small>The other team gets 1 point when the poet skips a card. This is the official rule.</small></span>
-          <input type="checkbox" id="skip-penalty" data-change="skip-penalty" ${d.settings.skipPenalty ? 'checked' : ''}>
-          <i class="switch" aria-hidden="true"></i>
-        </label>
         ${game && game.phase !== 'over' ? '<p class="hint">Starting a new game replaces the one in progress.</p>' : ''}
       </div>
     </div>
@@ -348,11 +345,7 @@ function readyView() {
   const last = game.turns[game.turns.length - 1];
   let lastLine = '';
   if (last) {
-    const pts = G.turnPoints(game, last);
-    const o = G.other(game, last.team);
-    lastLine = `<p class="last-turn">Last turn: <span class="t${last.team}">${esc(game.teams[last.team].name)} +${pts[last.team]}</span>${
-      pts[o] ? ` · <span class="t${o}">${esc(game.teams[o].name)} +${pts[o]}</span>` : ''
-    }</p>`;
+    lastLine = `<p class="last-turn">Last turn: <span class="t${last.team}">${esc(game.teams[last.team].name)} ${signed(G.turnPoints(last))}</span></p>`;
   }
   return `<main class="screen ready t${t}">
     <header class="topbar">
@@ -364,7 +357,7 @@ function readyView() {
       ${scoreboard(G.scores(game), t)}
       <section class="handoff">
         <p class="eyebrow">Up next</p>
-        <h1 class="team-title" data-fit="120">${esc(team.name)}</h1>
+        <h1 class="team-title" data-fit>${esc(team.name)}</h1>
         ${
           poet
             ? `<p class="poet-line"><b>${esc(poet)}</b> is the poet</p>`
@@ -408,19 +401,15 @@ function turnView() {
   const turn = game.turn;
   const card = G.currentCard(turn);
   const team = game.teams[turn.team];
-  const o = G.other(game, turn.team);
-  const opp = game.teams[o];
-  const pts = G.turnPoints(game, turn);
   const left = G.timeLeft(turn, Date.now());
   const paused = G.isPaused(turn) && !ui.timeUp;
   const low = left <= 10000;
-  const banked = card?.banked;
   const isNew = turn.cards.length !== ui.shownCards;
   ui.shownCards = turn.cards.length;
   const fx = ui.fx;
-  const fxLabel = fx && { one: '+1', three: '+3', no: 'NO!', skip: 'Skip' }[fx];
+  const fxLabel = fx && { one: '+1', three: '+3', skip: '−1' }[fx];
 
-  return `<main class="screen turn t${turn.team} ${fx === 'no' ? 'shake' : ''}">
+  return `<main class="screen turn t${turn.team} ${fx === 'skip' ? 'shake' : ''}">
     <header class="turn-top">
       <div class="turn-team"><span class="team-dot"></span><span>${esc(team.name)}${turn.poet ? ` · ${esc(turn.poet)}` : ''}</span></div>
       <div class="clock ${low ? 'is-low' : ''}" id="clock" role="timer" aria-label="Time left">${fmtTime(left)}</div>
@@ -429,37 +418,23 @@ function turnView() {
     <div class="timebar ${low ? 'is-low' : ''}" aria-hidden="true"><i id="timefill" style="transform:scaleX(${left / turn.total})"></i></div>
     ${
       card && !paused
-        ? `<section class="card ${banked ? 'is-banked' : ''} ${isNew ? 'enter' : ''}" aria-label="Card">
-            <div class="half half-one">
-              <div class="half-label">${tally(1)}<span>1 point</span>${banked ? '<span class="tag">Got it</span>' : ''}</div>
-              <p class="word" data-fit="88" data-fit-height>${esc(card.one)}</p>
-            </div>
-            <div class="half half-three">
-              <div class="half-label">${tally(3)}<span>3 points</span>${banked ? '<span class="tag tag-go">Go for 3?</span>' : ''}</div>
-              <p class="word" data-fit="80" data-fit-height>${esc(card.three)}</p>
-            </div>
+        ? `<section class="card ${isNew ? 'enter' : ''}" aria-label="Card. Tap the word your team guessed.">
+            <button type="button" class="half half-one" data-action="one" aria-label="${esc(card.one)}. Tap when guessed for 1 point.">
+              <span class="half-label">${tally(1)}<span>1 point</span><span class="tap-pill">Tap +1</span></span>
+              <span class="word" data-fit data-fit-height>${esc(card.one)}</span>
+            </button>
+            <button type="button" class="half half-three" data-action="three" aria-label="${esc(card.three)}. Tap when guessed for 3 points.">
+              <span class="half-label">${tally(3)}<span>3 points</span><span class="tap-pill">Tap +3</span></span>
+              <span class="word" data-fit data-fit-height>${esc(card.three)}</span>
+            </button>
           </section>`
         : '<section class="card card-empty"></section>'
     }
     <div class="turn-meta">
       <button class="link-btn" data-action="undo" ${turn.undo.length ? '' : 'disabled'}>${icons.undo}Undo</button>
-      <p class="turn-score" aria-label="Points this turn">
-        <span class="ts-team">${esc(team.name)} +${pts[turn.team]}</span>
-        ${pts[o] ? `<span class="ts-opp">${esc(opp.name)} +${pts[o]}</span>` : ''}
-      </p>
+      <p class="turn-score" aria-label="Points this turn">${esc(team.name)} ${signed(G.turnPoints(turn))}</p>
     </div>
-    <div class="controls">
-      ${
-        banked
-          ? '<button class="btn act-one is-next" data-action="one"><b>Next</b><small>Keep 1 point</small></button>'
-          : '<button class="btn act-one" data-action="one"><b>+1</b><small>Got it</small></button>'
-      }
-      <button class="btn act-three" data-action="three"><b>+3</b><small>Got it</small></button>
-      <button class="btn act-skip" data-action="skip" ${banked ? 'disabled' : ''}><b>Skip</b><small>${
-        game.settings.skipPenalty ? `${esc(opp.name)} +1` : 'Free'
-      }</small></button>
-      <button class="btn act-no" data-action="no"><b>${icons.club}NO!</b><small>${esc(opp.name)} +1</small></button>
-    </div>
+    <button class="btn act-skip" data-action="skip"><b>Skip</b><small>−1 point</small></button>
     ${fxLabel ? `<div class="fx fx-${fx}" aria-hidden="true">${fxLabel}</div>` : ''}
     ${
       paused
@@ -479,47 +454,41 @@ function turnView() {
   </main>`;
 }
 
-const REVIEW_OPTIONS = ['no', 'none', 'one', 'three'];
-
-function reviewSegment(card) {
-  if (card.result === 'skip') return game.settings.skipPenalty ? 'no' : 'none';
-  return card.result;
-}
+const REVIEW_OPTIONS = [
+  ['skip', '−1', 'Skipped, minus 1 point'],
+  ['none', '0', 'No points'],
+  ['one', '1', '1 point'],
+  ['three', '3', '3 points'],
+];
 
 function reviewView() {
   const turn = game.turn;
   const team = game.teams[turn.team];
-  const o = G.other(game, turn.team);
-  const opp = game.teams[o];
-  const pts = G.turnPoints(game, turn);
   const final = G.isFinalTurn(game);
   const next = game.teams[(G.activeTeam(game) + 1) % game.teams.length];
+  const count = (result) => turn.cards.filter((c) => c.result === result).length;
+  const summary = [plural(count('three'), 'three-pointer'), plural(count('one'), 'one-pointer'), plural(count('skip'), 'skip')].join(' · ');
   const rows = turn.cards
-    .map((card, i) => {
-      const current = reviewSegment(card);
-      const keepSkip = card.result === 'skip' && game.settings.skipPenalty;
-      const lostLabel = keepSkip ? 'Skip' : 'NO!';
-      const labels = { no: lostLabel, none: '0', one: '1', three: '3' };
-      const names = { no: `${lostLabel}, ${opp.name} gets 1`, none: 'No points', one: '1 point', three: '3 points' };
-      return `<li class="rv-row">
+    .map(
+      (card, i) => `<li class="rv-row">
         <div class="rv-words">
           <span class="rv-one">${esc(card.one)}</span>
           <span class="rv-three">${esc(card.three)}${card.timedOut ? ' <span class="tag tag-quiet">Buzzer</span>' : ''}</span>
         </div>
         <div class="seg seg-result" role="radiogroup" aria-label="Result for ${esc(card.one)}">
           ${REVIEW_OPTIONS.map(
-            (v) =>
-              `<button type="button" role="radio" aria-checked="${v === current}" aria-label="${esc(names[v])}" class="${v === current ? 'is-on' : ''}" data-action="set-result" data-index="${i}" data-value="${v === 'no' && keepSkip ? 'skip' : v}" data-kind="${v}">${labels[v]}</button>`
+            ([value, label, name]) =>
+              `<button type="button" role="radio" aria-checked="${value === card.result}" aria-label="${name}" class="${value === card.result ? 'is-on' : ''}" data-action="set-result" data-index="${i}" data-value="${value}">${label}</button>`
           ).join('')}
         </div>
-      </li>`;
-    })
+      </li>`
+    )
     .join('');
   return `<main class="screen review t${turn.team}">
     <header class="review-head">
       <p class="eyebrow">Turn over · ${esc(team.name)}${turn.poet ? ` · ${esc(turn.poet)}` : ''}</p>
-      <p class="review-total">${esc(team.name)} +${pts[turn.team]}</p>
-      <p class="review-sub">${pts[o] ? `<span class="ts-opp">${esc(opp.name)} +${pts[o]}</span> from skips and NO!s` : 'No points given away'}</p>
+      <p class="review-total">${esc(team.name)} ${signed(G.turnPoints(turn))}</p>
+      <p class="review-sub">${summary}</p>
     </header>
     <p class="hint review-hint">Judge disagrees? Fix any card before it counts.</p>
     <div class="scroll" data-key="review">
@@ -546,16 +515,16 @@ function overView() {
   if (st.mvp?.points > 0) awards.push(award('Top poet', esc(st.mvp.name), `${plural(st.mvp.points, 'point')} for ${esc(game.teams[st.mvp.team].name)}`));
   if (st.best?.points > 0)
     awards.push(
-      award('Best turn', `${esc(game.teams[st.best.team].name)} +${st.best.points}`, `${st.best.poet ? `${esc(st.best.poet)}, ` : ''}round ${st.best.round}`)
+      award('Best turn', `${esc(game.teams[st.best.team].name)} ${signed(st.best.points)}`, `${st.best.poet ? `${esc(st.best.poet)}, ` : ''}round ${st.best.round}`)
     );
-  if (st.bonked) awards.push(award('Most bonked', esc(st.bonked.name), `${st.bonked.nos} NO!${st.bonked.nos === 1 ? '' : 's'}`));
+  if (st.skipper) awards.push(award('Most skips', esc(st.skipper.name), plural(st.skipper.skips, 'skip')));
   awards.push(award('Cards played', st.cards, `${st.threes} for 3 points`));
 
   return `<main class="screen over ${winner === null ? 'is-tie' : `t${winner}`}">
     <div class="scroll" data-key="over">
       <div class="over-head">
         <p class="eyebrow">Game over · ${plural(rounds, 'round')}</p>
-        <h1 class="winner" data-fit="112">${w ? `${esc(w.name)} win!` : 'Tie!'}</h1>
+        <h1 class="winner" data-fit>${w ? `${esc(w.name)} win!` : 'Tie!'}</h1>
         <p class="grunt">${w ? `${esc(w.name)} happy. ${esc(l.name)} sad.` : 'Same score. Both good. Both bad.'}</p>
       </div>
       ${scoreboard(scores, winner)}
@@ -589,17 +558,16 @@ function sheetView() {
 }
 
 function rulesSheet() {
-  const freeSkips = game && ui.screen === 'game' && !game.settings.skipPenalty;
   return `<ol class="rules">
     <li><b>Teams take turns.</b> On your turn you are the poet. Get your own team to guess as many cards as you can before time runs out.</li>
     <li><b>Words of one syllable only.</b> “Big rock fall from sky. Go boom.” is fine. Say “meteor” and you get bonked.</li>
     <li><b>No tricks.</b> No gestures or acting, no “sounds like” or “rhymes with”, no spelling, initials or other languages. Never say any part of the word on the card. Once your team says a word, you may use it.</li>
-    <li><b>1 point or 3 points.</b> Each card has an easier 1-point word and a harder 3-point word, and you can go for either. When your team gets the 1, tap +1. Tap again to keep the point and move on, or push for the 3. A card is worth 3 at most.</li>
-    <li><b>The judge.</b> A player from the other team sits beside the poet and watches the card. Break a rule and they yell “NO!”, bonk you (gently) and tap NO!. The card is lost, along with any point you had on it, and their team gets 1 point.</li>
-    <li><b>Skips.</b> ${freeSkips ? 'Stuck? Skip the card. Skips are free in this game.' : 'Stuck? Skip the card. The other team gets 1 point.'}</li>
+    <li><b>Tap the word they guess.</b> The top word is easier and worth 1 point. The bottom word is harder and worth 3. Go for either one, and tap whichever word your team says.</li>
+    <li><b>Skipping costs 1 point.</b> Stuck? Tap Skip and your team loses a point.</li>
+    <li><b>The judge.</b> A player from the other team sits beside the poet and watches the card. Break a rule and they yell “NO!” and bonk you (gently). The card counts as a skip.</li>
     <li><b>Winning.</b> Most points after the last round wins.</li>
   </ol>
-  <p class="hint">Tapped the wrong button? Undo puts the card back. After each turn you can fix any card before the score is saved.</p>`;
+  <p class="hint">Tapped the wrong word? Undo puts the card back. After each turn you can fix any card before the score is saved.</p>`;
 }
 
 function menuSheet() {
@@ -726,20 +694,19 @@ function startTurn() {
   countdownTimer = setTimeout(step, COUNTDOWN_STEP_MS);
 }
 
-const SOUNDS = { bank: sfx.bank, one: sfx.one, three: sfx.three, no: sfx.no, skip: sfx.skip };
+const SOUNDS = { one: sfx.one, three: sfx.three, skip: sfx.skip };
+const BUZZ = { one: 25, three: [30, 40, 30, 40, 30], skip: 90 };
 
 function press(kind) {
   const now = performance.now();
   if (now < lockUntil || ui.timeUp) return;
-  const outcome = G.act(game, kind, drawFromDeck);
-  if (!outcome) return;
-  const cards = game.turn.cards;
-  const result = outcome === 'banked' ? 'bank' : cards[cards.length - 2].result;
-  // Block ghost double-taps; a new card gets a longer guard so nobody scores it by accident.
-  lockUntil = now + (outcome === 'dealt' ? 320 : 120);
-  ui.fx = result === 'bank' ? null : result;
-  SOUNDS[result]();
-  buzz(result === 'no' ? [70, 40, 140] : result === 'three' ? [30, 40, 30, 40, 30] : 25);
+  if (!G.act(game, kind, drawFromDeck)) return;
+  // A new card just appeared under the poet's thumb: ignore taps for a moment
+  // so a double tap can't score it by accident.
+  lockUntil = now + 350;
+  ui.fx = kind;
+  SOUNDS[kind]();
+  buzz(BUZZ[kind]);
   commit();
 }
 
@@ -754,7 +721,10 @@ function newDraft(fromGame) {
       name: source?.teams?.[i]?.name ?? G.DEFAULT_TEAM_NAMES[i],
       players: [...(source?.teams?.[i]?.players ?? [])],
     })),
-    settings: { ...G.DEFAULT_SETTINGS, ...(source?.settings ?? {}) },
+    settings: {
+      seconds: source?.settings?.seconds ?? G.DEFAULT_SETTINGS.seconds,
+      rounds: source?.settings?.rounds ?? G.DEFAULT_SETTINGS.rounds,
+    },
   };
 }
 
@@ -860,7 +830,6 @@ const actions = {
   // During a turn
   one: () => press('one'),
   three: () => press('three'),
-  no: () => press('no'),
   skip: () => press('skip'),
   undo() {
     if (!G.undo(game)) return;
@@ -965,9 +934,7 @@ app.addEventListener('input', (e) => {
 
 app.addEventListener('change', (e) => {
   const el = e.target;
-  if (el.dataset.change === 'skip-penalty' && ui.draft) {
-    ui.draft.settings.skipPenalty = el.checked;
-  } else if (el.dataset.change === 'sound') {
+  if (el.dataset.change === 'sound') {
     prefs.sound = el.checked;
     setSoundEnabled(prefs.sound);
     save('prefs', prefs);
@@ -988,7 +955,7 @@ app.addEventListener('submit', (e) => {
   document.getElementById(`add-player-${t}`)?.focus();
 });
 
-// Keyboard shortcuts, handy on a laptop: 1, 3, N (no), S (skip), U (undo), space (pause).
+// Keyboard shortcuts, handy on a laptop: 1, 3, S (skip), U (undo), space (pause).
 document.addEventListener('keydown', (e) => {
   if (e.target.closest?.('input, textarea')) return;
   if (e.key === 'Escape' && ui.sheet) return actions['close-sheet']();
@@ -1000,7 +967,7 @@ document.addEventListener('keydown', (e) => {
     return paused ? actions.resume() : actions.pause();
   }
   if (paused) return;
-  const map = { 1: 'one', 3: 'three', n: 'no', s: 'skip', u: 'undo' };
+  const map = { 1: 'one', 3: 'three', s: 'skip', u: 'undo' };
   if (map[key]) actions[map[key]]();
 });
 

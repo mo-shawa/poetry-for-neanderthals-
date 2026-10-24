@@ -1,25 +1,25 @@
 // Pure game rules. No DOM, no clock: callers pass `now` and a `draw()` that
 // returns the next [onePointWord, threePointWord] card.
 //
-// Card results:
-//   'one'   poet's team +1
-//   'three' poet's team +3
-//   'no'    poet broke a rule: other team +1
-//   'skip'  other team +1 (or 0 when skips are free)
-//   'none'  nobody scores (time ran out mid-card, or fixed in review)
+// Card results, all scored for the poet's team:
+//   'one'   guessed the top word: +1
+//   'three' guessed the bottom word: +3
+//   'skip'  skipped, or the poet broke a rule: -1
+//   'none'  no score (time ran out mid-card, or set in review)
 
-export const DEFAULT_SETTINGS = { seconds: 90, rounds: 5, skipPenalty: true };
+export const DEFAULT_SETTINGS = { seconds: 90, rounds: 5 };
 export const DEFAULT_TEAM_NAMES = ['Glad', 'Mad'];
-export const RESULTS = ['one', 'three', 'no', 'skip', 'none'];
+export const POINTS = { one: 1, three: 3, skip: -1, none: 0 };
 
 const MAX_UNDO = 60;
 
 export function createGame({ teams, settings = {}, firstTeam = 0 }) {
-  const merged = { ...DEFAULT_SETTINGS, ...settings };
+  const seconds = settings.seconds ?? DEFAULT_SETTINGS.seconds;
+  const rounds = settings.rounds ?? DEFAULT_SETTINGS.rounds;
   return {
-    v: 1,
-    settings: merged,
-    baseRounds: merged.rounds,
+    v: 2,
+    settings: { seconds, rounds },
+    baseRounds: rounds,
     teams: teams.map((team, i) => ({
       name: team.name.trim() || DEFAULT_TEAM_NAMES[i] || `Team ${i + 1}`,
       players: team.players.map((p) => p.trim()).filter(Boolean),
@@ -35,7 +35,7 @@ export function createGame({ teams, settings = {}, firstTeam = 0 }) {
 
 /** Returns the saved game if it looks valid, otherwise null. */
 export function restore(saved) {
-  if (!saved || saved.v !== 1 || !Array.isArray(saved.teams) || saved.teams.length < 2) return null;
+  if (!saved || saved.v !== 2 || !Array.isArray(saved.teams) || saved.teams.length < 2) return null;
   if (!['ready', 'turn', 'review', 'over'].includes(saved.phase)) return null;
   if ((saved.phase === 'turn' || saved.phase === 'review') && !saved.turn) return null;
   return saved;
@@ -64,36 +64,24 @@ export function choosePoet(g, index) {
   if (index >= 0 && index < team.players.length) team.next = index;
 }
 
-export function cardPoints(g, result, poetTeam) {
-  const pts = g.teams.map(() => 0);
-  if (result === 'one') pts[poetTeam] += 1;
-  else if (result === 'three') pts[poetTeam] += 3;
-  else if (result === 'no') pts[other(g, poetTeam)] += 1;
-  else if (result === 'skip' && g.settings.skipPenalty) pts[other(g, poetTeam)] += 1;
-  return pts;
-}
-
-/** Points each team earned during one turn (finished or in progress). */
-export function turnPoints(g, turn) {
-  const pts = g.teams.map(() => 0);
-  for (const card of turn.cards) {
-    if (!card.result) continue;
-    cardPoints(g, card.result, turn.team).forEach((p, i) => (pts[i] += p));
-  }
+/** Points the poet's team earned in one turn (finished or in progress). */
+export function turnPoints(turn) {
+  let pts = 0;
+  for (const card of turn.cards) pts += POINTS[card.result] ?? 0;
   return pts;
 }
 
 /** Score from saved turns plus manual adjustments. */
 export function scores(g) {
   const pts = [...g.adjust];
-  for (const turn of g.turns) turnPoints(g, turn).forEach((p, i) => (pts[i] += p));
+  for (const turn of g.turns) pts[turn.team] += turnPoints(turn);
   return pts;
 }
 
 /** Scores including the turn being played or reviewed right now. */
 export function liveScores(g) {
   const pts = scores(g);
-  if (g.turn) turnPoints(g, g.turn).forEach((p, i) => (pts[i] += p));
+  if (g.turn) pts[g.turn.team] += turnPoints(g.turn);
   return pts;
 }
 
@@ -126,7 +114,7 @@ export function startTurn(g, now, draw) {
 
 function deal(turn, draw) {
   const [one, three] = turn.queue.shift() ?? draw();
-  turn.cards.push({ one, three, result: null, banked: false });
+  turn.cards.push({ one, three, result: null });
 }
 
 /** The card on screen, or null once the turn is over. */
@@ -136,46 +124,31 @@ export function currentCard(turn) {
 }
 
 /**
- * Apply a poet/judge button press.
- *   'one'   first press banks the 1-point word and keeps the card up so the
- *           poet can go for 3; a second press keeps the 1 and moves on.
- *   'three' scores 3 (with or without banking first).
- *   'no'    the judge caught a rule break: the card and anything banked on it is lost.
- *   'skip'  give up on the card.
- * Returns 'banked', 'dealt' or null when nothing happened.
+ * Score the card on screen and deal the next one.
+ *   'one'   the team guessed the top word
+ *   'three' the team guessed the bottom word
+ *   'skip'  give up on the card (also used when the poet breaks a rule)
+ * Returns true if the press counted.
  */
 export function act(g, action, draw) {
   const turn = g.turn;
-  if (g.phase !== 'turn' || !turn || turn.left !== null) return null;
+  if (g.phase !== 'turn' || !turn || turn.left !== null) return false;
   const card = currentCard(turn);
-  if (!card) return null;
-
-  const before = JSON.stringify(turn.cards);
-  if (action === 'one' && !card.banked) {
-    card.banked = true;
-  } else if (action === 'one' || action === 'three' || action === 'no') {
-    card.result = action;
-  } else if (action === 'skip') {
-    card.result = card.banked ? 'one' : 'skip';
-  } else {
-    return null;
-  }
-  turn.undo.push(before);
+  if (!card || !['one', 'three', 'skip'].includes(action)) return false;
+  turn.undo.push(JSON.stringify(turn.cards));
   if (turn.undo.length > MAX_UNDO) turn.undo.shift();
-
-  if (card.result === null) return 'banked';
+  card.result = action;
   deal(turn, draw);
-  return 'dealt';
+  return true;
 }
 
-/** Undo the last button press in this turn. */
+/** Undo the last press in this turn: the previous card comes back. */
 export function undo(g) {
   const turn = g.turn;
   if (g.phase !== 'turn' || !turn || turn.undo.length === 0) return false;
   const onScreen = currentCard(turn);
   const restored = JSON.parse(turn.undo.pop());
-  // If the press dealt a new card, put that card back on top of the pile
-  // instead of throwing it away.
+  // Put the card that was on screen back on top of the pile instead of losing it.
   if (onScreen && restored.length < turn.cards.length) {
     turn.queue.unshift([onScreen.one, onScreen.three]);
   }
@@ -203,14 +176,14 @@ export function resume(g, now) {
   turn.left = null;
 }
 
-/** Time's up (or the poet ended early). A banked card still counts its 1 point. */
+/** Time's up (or the poet ended early). The card on screen scores nothing. */
 export function endTurn(g) {
   const turn = g.turn;
   if (g.phase !== 'turn' || !turn) return;
   const card = currentCard(turn);
   if (card) {
-    card.result = card.banked ? 'one' : 'none';
-    if (!card.banked) card.timedOut = true;
+    card.result = 'none';
+    card.timedOut = true;
   }
   turn.left = 0;
   turn.endsAt = null;
@@ -221,7 +194,7 @@ export function endTurn(g) {
 
 /** Fix a card's result on the review screen. */
 export function setResult(g, index, result) {
-  if (g.phase !== 'review' || !RESULTS.includes(result)) return;
+  if (g.phase !== 'review' || !(result in POINTS)) return;
   const card = g.turn.cards[index];
   if (card) card.result = result;
 }
@@ -276,20 +249,20 @@ export function stats(g) {
   let cards = 0;
   let threes = 0;
   for (const turn of g.turns) {
-    const pts = turnPoints(g, turn)[turn.team];
+    const pts = turnPoints(turn);
     cards += turn.cards.length;
     threes += turn.cards.filter((c) => c.result === 'three').length;
     if (!best || pts > best.points) best = { team: turn.team, poet: turn.poet, round: turn.round, points: pts };
     if (turn.poet) {
       const key = `${turn.team}:${turn.poet}`;
-      const p = poets.get(key) ?? { name: turn.poet, team: turn.team, points: 0, nos: 0 };
+      const p = poets.get(key) ?? { name: turn.poet, team: turn.team, points: 0, skips: 0 };
       p.points += pts;
-      p.nos += turn.cards.filter((c) => c.result === 'no').length;
+      p.skips += turn.cards.filter((c) => c.result === 'skip').length;
       poets.set(key, p);
     }
   }
   const list = [...poets.values()];
   const mvp = list.reduce((a, b) => (!a || b.points > a.points ? b : a), null);
-  const bonked = list.filter((p) => p.nos > 0).reduce((a, b) => (!a || b.nos > a.nos ? b : a), null);
-  return { cards, threes, best, mvp, bonked };
+  const skipper = list.filter((p) => p.skips > 0).reduce((a, b) => (!a || b.skips > a.skips ? b : a), null);
+  return { cards, threes, best, mvp, skipper };
 }

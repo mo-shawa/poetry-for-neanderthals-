@@ -46,9 +46,6 @@
   --team-ink: var(--glad-ink);
   --team-text: var(--glad-text);
   --team-glow: var(--glad-glow);
-  --opp: var(--mad);
-  --opp-ink: var(--mad-ink);
-  --opp-text: var(--mad-text);
 }
 
 .t1 {
@@ -56,9 +53,6 @@
   --team-ink: var(--mad-ink);
   --team-text: var(--mad-text);
   --team-glow: var(--mad-glow);
-  --opp: var(--glad);
-  --opp-ink: var(--glad-ink);
-  --opp-text: var(--glad-text);
 }
 
 /* ---------- Base ---------- */
@@ -293,7 +287,7 @@ h3 {
 }
 
 .btn.big b {
-  font-size: 28px;
+  font-size: clamp(22px, 6.6vw, 28px);
 }
 
 .btn.small {
@@ -563,6 +557,54 @@ h3 {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
+button.half {
+  appearance: none;
+  width: 100%;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+button.half-one {
+  background: transparent;
+}
+
+button.half:active {
+  background: var(--team);
+  color: var(--team-ink);
+  transition: none;
+}
+
+button.half:active .half-label,
+button.half:active .tally {
+  color: inherit;
+}
+
+button.half:focus-visible {
+  outline-offset: -5px;
+}
+
+.tap-pill {
+  margin-left: auto;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: var(--team);
+  color: var(--team-ink);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+
+button.half:active .tap-pill {
+  background: var(--team-ink);
+  color: var(--team);
+}
+
 .half-three {
   background: var(--bone-2) var(--grain);
   border-top: 3px dashed var(--char-line);
@@ -577,10 +619,6 @@ h3 {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--char-soft);
-}
-
-.half-label .tag {
-  margin-left: auto;
 }
 
 .tally {
@@ -622,30 +660,6 @@ h3 {
   hyphens: manual;
 }
 
-.card.is-banked .half-one {
-  background: var(--team);
-  color: var(--team-ink);
-}
-
-.card.is-banked .half-one .half-label,
-.card.is-banked .half-one .tally {
-  color: inherit;
-}
-
-.card.is-banked .half-one .word {
-  opacity: 0.75;
-}
-
-.card.is-banked .half-three {
-  box-shadow: inset 0 0 0 4px var(--team);
-  animation: go-for-three 1.4s ease-in-out infinite;
-}
-
-.tag-go {
-  background: var(--team);
-  color: var(--team-ink);
-}
-
 .card-empty {
   flex: 1;
   opacity: 0.4;
@@ -678,15 +692,15 @@ h3 {
 }
 
 .logo-small {
-  font: 400 clamp(22px, 7vw, 32px)/1 var(--font-display);
-  letter-spacing: 0.18em;
+  font: 400 clamp(20px, 6vw, 28px)/1 var(--font-display);
+  letter-spacing: 0.16em;
   color: var(--muted);
 }
 
 .logo-big {
   display: block;
   width: 100%;
-  font: 900 88px/0.9 var(--font-display);
+  font: 900 170px/0.9 var(--font-display);
   white-space: nowrap;
   overflow: hidden;
   color: var(--glad-text);
@@ -1123,75 +1137,29 @@ h3 {
 }
 
 .turn-score {
-  display: flex;
-  gap: 12px;
   min-width: 0;
-  font: 400 22px/1 var(--font-display);
+  overflow: hidden;
+  font: 400 24px/1 var(--font-display);
+  text-overflow: ellipsis;
   text-transform: uppercase;
   white-space: nowrap;
-}
-
-.ts-team {
   color: var(--team-text);
 }
 
-.ts-opp {
-  color: var(--opp-text);
-}
-
-.controls {
+.turn .act-skip {
   flex: none;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  min-height: 66px;
+  flex-direction: row;
+  gap: 14px;
 }
 
-.controls .btn {
-  min-height: 76px;
-}
-
-.act-one,
-.act-three {
-  background: var(--team);
-  color: var(--team-ink);
-}
-
-.act-one b,
-.act-three b {
-  font-size: 38px;
-}
-
-.act-one.is-next {
-  background: var(--bone);
-  color: var(--char);
-}
-
-.act-one.is-next b {
-  font-size: 30px;
-}
-
-.controls .act-skip,
-.controls .act-no {
-  min-height: 62px;
-}
-
-.act-skip {
-  background: transparent;
-  box-shadow: inset 0 0 0 2px var(--line);
-}
-
-.act-skip:active:not(:disabled) {
-  transform: translateY(1px);
-  box-shadow: inset 0 0 0 2px var(--line);
-}
-
-.act-no {
-  background: var(--opp);
-  color: var(--opp-ink);
-}
-
-.act-no b {
+.act-skip b {
   font-size: 32px;
+}
+
+.act-skip small {
+  font-size: 13px;
+  opacity: 0.7;
 }
 
 /* ---------- Overlays and effects ---------- */
@@ -1282,19 +1250,21 @@ h3 {
   font-size: 170px;
 }
 
-.fx-no {
-  color: var(--opp-text);
-  font-size: 160px;
-}
-
 .fx-skip {
-  color: var(--muted);
-  font-size: 90px;
-  text-transform: uppercase;
+  color: var(--danger);
+  font-size: 150px;
 }
 
 .shake {
   animation: shake 0.42s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+.turn .half-one .word {
+  font-size: 88px;
+}
+
+.turn .half-three .word {
+  font-size: 80px;
 }
 
 .card.enter {
@@ -1323,10 +1293,6 @@ h3 {
 .review-sub {
   font-size: 15px;
   color: var(--muted);
-}
-
-.review-sub .ts-opp {
-  font-weight: 600;
 }
 
 .review-hint {
@@ -1380,13 +1346,13 @@ h3 {
   padding: 0 8px;
 }
 
-.seg-result button.is-on[data-kind='no'] {
-  background: var(--opp);
-  color: var(--opp-ink);
+.seg-result button.is-on[data-value='skip'] {
+  background: var(--danger);
+  color: var(--char);
 }
 
-.seg-result button.is-on[data-kind='one'],
-.seg-result button.is-on[data-kind='three'] {
+.seg-result button.is-on[data-value='one'],
+.seg-result button.is-on[data-value='three'] {
   background: var(--team);
   color: var(--team-ink);
 }
@@ -1689,12 +1655,6 @@ h3 {
   }
 }
 
-@keyframes go-for-three {
-  50% {
-    box-shadow: inset 0 0 0 8px var(--team);
-  }
-}
-
 @keyframes throb {
   50% {
     transform: scale(1.12);
@@ -1732,12 +1692,8 @@ h3 {
 
 /* Short phones: tighten the turn screen so the card keeps its room. */
 @media (max-height: 640px) {
-  .controls .btn {
-    min-height: 64px;
-  }
-  .controls .act-skip,
-  .controls .act-no {
-    min-height: 52px;
+  .turn .act-skip {
+    min-height: 56px;
   }
   .clock {
     font-size: 38px;
@@ -1747,5 +1703,8 @@ h3 {
   }
   .card-mini {
     height: 150px;
+  }
+  .logo-big {
+    font-size: 116px;
   }
 }

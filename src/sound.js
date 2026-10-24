@@ -56,6 +56,36 @@ function noise({ dur = 0.2, vol = 0.3, delay = 0, freq = 800, to = freq, q = 1, 
   src.stop(t + dur + 0.05);
 }
 
+// Sawtooth through a low-pass filter: a cheap, buzzy trombone.
+function brass({ freq, to = freq, dur, vol = 0.2, delay = 0, vibrato = 0 }) {
+  const t = ctx.currentTime + delay;
+  const osc = ctx.createOscillator();
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(freq, t);
+  if (to !== freq) osc.frequency.linearRampToValueAtTime(to, t + dur);
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.value = 1100;
+  filter.Q.value = 3;
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.0001, t);
+  gain.gain.exponentialRampToValueAtTime(vol, t + 0.03);
+  gain.gain.setValueAtTime(vol, t + dur * 0.75);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  if (vibrato) {
+    const lfo = ctx.createOscillator();
+    const depth = ctx.createGain();
+    lfo.frequency.value = 7;
+    depth.gain.value = vibrato;
+    lfo.connect(depth).connect(osc.frequency);
+    lfo.start(t);
+    lfo.stop(t + dur);
+  }
+  osc.connect(filter).connect(gain).connect(ctx.destination);
+  osc.start(t);
+  osc.stop(t + dur + 0.05);
+}
+
 function play(fn) {
   if (!enabled || !ctx) return;
   try {
@@ -75,24 +105,28 @@ export const sfx = {
       tone({ freq: 520, type: 'triangle', dur: 0.1, vol: 0.25 });
       tone({ freq: 780, type: 'triangle', dur: 0.22, vol: 0.3, delay: 0.09 });
     }),
-  bank: () => play(() => tone({ freq: 660, type: 'sine', dur: 0.12, vol: 0.25 })),
+  // Top word: a quick bright ding.
   one: () =>
     play(() => {
-      tone({ freq: 660, type: 'sine', dur: 0.1, vol: 0.25 });
-      tone({ freq: 990, type: 'sine', dur: 0.18, vol: 0.25, delay: 0.08 });
+      tone({ freq: 880, type: 'sine', dur: 0.09, vol: 0.25 });
+      tone({ freq: 1320, type: 'sine', dur: 0.22, vol: 0.22, delay: 0.07 });
     }),
+  // Bottom word: a drum thump, a rising fanfare and a sparkle on top.
   three: () =>
     play(() => {
-      [523, 659, 784, 1047].forEach((f, i) => tone({ freq: f, type: 'triangle', dur: 0.2, vol: 0.25, delay: i * 0.07 }));
+      tone({ freq: 120, to: 50, type: 'sine', dur: 0.3, vol: 0.55 });
+      noise({ dur: 0.08, vol: 0.35, freq: 1800, to: 400 });
+      [523, 659, 784, 1047].forEach((f, i) => tone({ freq: f, type: 'triangle', dur: 0.2, vol: 0.22, delay: 0.06 + i * 0.07 }));
+      tone({ freq: 2093, type: 'sine', dur: 0.4, vol: 0.1, delay: 0.36 });
     }),
-  // The NO! stick: a hollow thud with a rubbery pitch drop.
-  no: () =>
+  // Skip: a short sad trombone, wah wah wah waaah.
+  skip: () =>
     play(() => {
-      noise({ dur: 0.18, vol: 0.6, freq: 900, to: 120 });
-      tone({ freq: 220, to: 55, type: 'sine', dur: 0.35, vol: 0.6 });
-      tone({ freq: 140, to: 70, type: 'square', dur: 0.12, vol: 0.08 });
+      brass({ freq: 294, dur: 0.17 });
+      brass({ freq: 277, dur: 0.17, delay: 0.19 });
+      brass({ freq: 262, dur: 0.17, delay: 0.38 });
+      brass({ freq: 247, to: 238, dur: 0.5, delay: 0.57, vibrato: 6 });
     }),
-  skip: () => play(() => noise({ dur: 0.25, vol: 0.25, freq: 400, to: 2400, q: 2, type: 'bandpass' })),
   undo: () => play(() => tone({ freq: 700, to: 440, type: 'sine', dur: 0.12, vol: 0.18 })),
   time: () =>
     play(() => {

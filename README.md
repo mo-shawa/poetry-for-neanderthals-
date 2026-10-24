@@ -1,8 +1,8 @@
-# Poetry for Neanderthals
+# It Dog
 
-A pass-the-phone version of the party game. The poet gets their team to guess the
-word on a card while speaking only in words of one syllable. Break the rule and
-the other team yells NO! and bonks you.
+A pass-the-phone party game in the style of Poetry for Neanderthals. The poet gets
+their team to guess the word on a card while speaking only in words of one
+syllable. Break the rule and the other team yells NO! and bonks you.
 
 One phone runs the whole game: no accounts, no network needed once it has loaded.
 
@@ -27,19 +27,20 @@ branch → `main` / root). There is no build step.
    rotates through everyone. Pick turn length (60/90/120 s) and rounds.
 2. **Pass the phone.** The ready screen shows the score, the team up next and the
    poet. Someone from the other team sits beside the poet as judge.
-3. **The turn.** After a 3-2-1 countdown the card appears.
-   - **+1**: the team got the 1-point word. The card stays up so the poet can
-     go for the 3. Tap again (**Next**) to keep the point and move on.
-   - **+3**: the team got the 3-point word. A card is worth 3 at most.
-   - **NO!**: the judge caught a rule break. The card and any banked point are
-     lost and the judge's team gets 1 point.
-   - **Skip**: the other team gets 1 point (can be made free in setup).
+3. **The turn.** After a 3-2-1 countdown the card appears with the easier
+   word on top and the harder word below.
+   - **Tap the top word** when the team guesses it: **+1**.
+   - **Tap the bottom word** when the team guesses it: **+3**.
+   - **Skip** (the button under the card): **−1**. If the poet breaks a rule,
+     the judge yells NO! and the card is skipped.
+   - Each of the three has its own sound: a ding, a drum-and-fanfare, and a
+     sad trombone.
    - **Undo** reverses the last tap and puts the card back.
    - **Pause** hides the card and stops the clock. Leaving the app also pauses.
 4. **Review.** After the buzzer, every card from the turn is listed. Fix any
    result the judge disputes (including a guess right on the buzzer) before the
    turn is saved.
-5. **Game over.** Winner, final score, top poet, best turn and most bonked.
+5. **Game over.** Winner, final score, top poet, best turn and most skips.
    Tied? Play a tiebreaker round. Rematch keeps the teams and swaps who starts.
 
 The in-game menu lets you change turn length and rounds mid-game, fix the
@@ -47,11 +48,15 @@ score, turn sound off, or end the game early.
 
 ## No repeated cards
 
-The deck has 830 cards. Every card dealt is remembered on the phone, across
-turns and across games, and nothing repeats until all of them have been played.
-When the deck runs out it reshuffles, but still never repeats a card within the
-game in progress. The home screen shows how many fresh cards are left and can
-reset the history.
+The deck has 830 cards. Every card dealt is saved in the phone's local storage,
+across turns, teams and Play Again, and nothing repeats on that phone until all
+of them have been played. When the deck runs out, the half of the deck seen
+longest ago comes back into play; recent cards (tonight's games) stay out. The
+home screen shows how many fresh cards are left and can reset the history.
+
+To add cards, append `[1-point word, 3-point word]` pairs to `src/cards.js`. A
+card's id is its 1-point word, so new cards count as unseen and are dealt
+straight away, and the seen history of existing cards is kept.
 
 ## Phone details
 
@@ -61,8 +66,7 @@ reset the history.
   brings you back to a paused turn.
 - Large tap targets in thumb reach, a guard against accidental double taps, and
   a layout that fits small phones without scrolling during a turn.
-- Laptop shortcuts during a turn: `1`, `3`, `N` (NO!), `S` (skip), `U` (undo),
-  space (pause).
+- Laptop shortcuts during a turn: `1`, `3`, `S` (skip), `U` (undo), space (pause).
 
 ## Code
 

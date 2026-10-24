@@ -1,10 +1,12 @@
 // localStorage can be missing or throw (private mode, blocked storage), so every
 // call is wrapped and the game keeps working in memory without it.
-const PREFIX = 'pfn:';
+const PREFIX = 'itdog:';
+// Keys from before the game was renamed, read once so card history carries over.
+const OLD_PREFIX = 'pfn:';
 
 export function load(key, fallback) {
   try {
-    const raw = localStorage.getItem(PREFIX + key);
+    const raw = localStorage.getItem(PREFIX + key) ?? localStorage.getItem(OLD_PREFIX + key);
     return raw == null ? fallback : JSON.parse(raw);
   } catch {
     return fallback;
