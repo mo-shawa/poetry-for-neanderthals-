@@ -23,7 +23,7 @@ branch → `main` / root). There is no build step.
 
 ## How a game goes
 
-1. **New game.** Name the two teams (Pups and Mutts by default) and, optionally,
+1. **New game.** Name the two teams (Blue and Red by default) and, optionally,
    the players. With names, the game says who's It each turn and rotates
    through everyone. Pick the talk rules (a new rule each round, or one
    syllable only), the turn length (60/90/120 s) and the number of rounds.

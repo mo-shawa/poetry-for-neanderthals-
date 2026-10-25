@@ -13,7 +13,7 @@ import { TALK_RULES, CLASSIC_RULE } from './talk-rules.js';
 // is "banked": it counts as 'one' until something else happens.
 
 export const DEFAULT_SETTINGS = { seconds: 90, rounds: 5, talk: 'mix' };
-export const DEFAULT_TEAM_NAMES = ['Pups', 'Mutts'];
+export const DEFAULT_TEAM_NAMES = ['Blue', 'Red'];
 export const POINTS = { one: 1, three: 3, skip: -1, none: 0 };
 
 const MAX_UNDO = 60;

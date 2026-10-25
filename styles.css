@@ -1,6 +1,6 @@
 /* Layout: one full-height screen at a time, a single column with controls docked
-   at the bottom in thumb reach. Warm dark background, cream cards, and a warm
-   yellow and a warm red for the two teams. */
+   at the bottom in thumb reach. Warm dark background, cream cards, blue and red
+   for the two teams, and a warm yellow for accents. */
 :root {
   color-scheme: dark;
 
@@ -21,10 +21,14 @@
   --veil-light: rgba(10, 6, 4, 0.6);
   --glow: rgba(240, 120, 40, 0.1);
 
-  --team-a: #eaa832;
-  --team-a-ink: #241604;
-  --team-a-text: #f2b84a;
-  --team-a-glow: rgba(234, 168, 50, 0.2);
+  --accent: #eaa832;
+  --accent-ink: #241604;
+  --accent-text: #f2b84a;
+
+  --team-a: #5b93e0;
+  --team-a-ink: #08182f;
+  --team-a-text: #86b3f0;
+  --team-a-glow: rgba(91, 147, 224, 0.24);
   --team-b: #c8432a;
   --team-b-ink: #fff4ec;
   --team-b-text: #f2735a;
@@ -115,7 +119,7 @@ h3 {
 }
 
 :focus-visible {
-  outline: 3px solid var(--team-a-text);
+  outline: 3px solid var(--accent-text);
   outline-offset: 2px;
 }
 
@@ -466,16 +470,16 @@ h3 {
 }
 
 .toggle-row input:checked + .switch {
-  background: var(--team-a);
+  background: var(--accent);
 }
 
 .toggle-row input:checked + .switch::after {
   transform: translateX(20px);
-  background: var(--team-a-ink);
+  background: var(--accent-ink);
 }
 
 .toggle-row input:focus-visible + .switch {
-  outline: 3px solid var(--team-a-text);
+  outline: 3px solid var(--accent-text);
   outline-offset: 2px;
 }
 
@@ -703,7 +707,7 @@ button.half:active .tap-pill {
   font: 900 170px/0.9 var(--font-display);
   white-space: nowrap;
   overflow: hidden;
-  color: var(--team-a-text);
+  color: var(--accent-text);
   text-shadow: 0.05em 0.05em 0 var(--team-b);
   padding-bottom: 0.06em;
 }
@@ -1090,7 +1094,7 @@ button.half:active .tap-pill {
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.04em;
-  color: var(--team-a-text);
+  color: var(--accent-text);
 }
 
 /* ---------- Turn ---------- */
@@ -1642,7 +1646,7 @@ button.half:active .tap-pill {
   top: 0;
   left: 0;
   font: 900 24px/1 var(--font-display);
-  color: var(--team-a-text);
+  color: var(--accent-text);
 }
 
 .rules b {
