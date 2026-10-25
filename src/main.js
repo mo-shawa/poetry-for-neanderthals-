@@ -74,12 +74,7 @@ const icons = {
   home: svg(`<path ${stroke} d="M4 11l8-7 8 7v8.5a.5.5 0 0 1-.5.5H15v-6H9v6H4.5a.5.5 0 0 1-.5-.5z"/>`),
 };
 
-const PAW =
-  '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
-  '<ellipse cx="5.2" cy="9.8" rx="2.1" ry="2.7"/><ellipse cx="9.4" cy="5.6" rx="2.1" ry="2.8"/>' +
-  '<ellipse cx="14.6" cy="5.6" rx="2.1" ry="2.8"/><ellipse cx="18.8" cy="9.8" rx="2.1" ry="2.7"/>' +
-  '<path d="M12 10.8c-2.9 0-6.2 3.6-6.2 6.5 0 1.9 1.6 2.9 3.2 2.3 1-.4 2-.8 3-.8s2 .4 3 .8c1.6.6 3.2-.4 3.2-2.3 0-2.9-3.3-6.5-6.2-6.5z"/></svg>';
-const paws = (n) => `<span class="paws" aria-hidden="true">${PAW.repeat(n)}</span>`;
+const tally = (n) => `<span class="tally" aria-hidden="true">${'<i></i>'.repeat(n)}</span>`;
 
 function seg(action, options, current, label) {
   return `<div class="seg" role="radiogroup">${options
@@ -232,11 +227,11 @@ function homeView() {
           <span class="rule-chip">Round rule: Questions only</span>
           <div class="card card-mini">
             <div class="half half-one">
-              <div class="half-label">${paws(1)}<span>1 point</span></div>
+              <div class="half-label">${tally(1)}<span>1 point</span></div>
               <p class="word">Fire</p>
             </div>
             <div class="half half-three">
-              <div class="half-label">${paws(3)}<span>3 points</span></div>
+              <div class="half-label">${tally(3)}<span>3 points</span></div>
               <p class="word">Fireworks</p>
             </div>
           </div>
@@ -450,16 +445,16 @@ function turnView() {
             ${
               banked
                 ? `<div class="half half-one">
-                    <span class="half-label">${paws(1)}<span>1 point</span><span class="tap-pill">Got it +1</span></span>
+                    <span class="half-label">${tally(1)}<span>1 point</span><span class="tap-pill">Got it +1</span></span>
                     <span class="word" data-fit data-fit-height>${esc(card.one)}</span>
                   </div>`
                 : `<button type="button" class="half half-one" data-action="one" aria-label="${esc(card.one)}. Tap when guessed for 1 point.">
-                    <span class="half-label">${paws(1)}<span>1 point</span><span class="tap-pill">Tap +1</span></span>
+                    <span class="half-label">${tally(1)}<span>1 point</span><span class="tap-pill">Tap +1</span></span>
                     <span class="word" data-fit data-fit-height>${esc(card.one)}</span>
                   </button>`
             }
             <button type="button" class="half half-three" data-action="three" aria-label="${esc(card.three)}. Tap when guessed for 3 points.">
-              <span class="half-label">${paws(3)}<span>3 points</span><span class="tap-pill">${banked ? 'Go for 3' : 'Tap +3'}</span></span>
+              <span class="half-label">${tally(3)}<span>3 points</span><span class="tap-pill">${banked ? 'Go for 3' : 'Tap +3'}</span></span>
               <span class="word" data-fit data-fit-height>${esc(card.three)}</span>
             </button>
           </section>`

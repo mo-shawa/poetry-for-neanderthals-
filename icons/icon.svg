@@ -1,12 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" fill="#151b2e"/>
-  <rect x="106" y="86" width="300" height="340" rx="78" fill="#fdf8ec"/>
-  <circle cx="256" cy="136" r="18" fill="#151b2e"/>
-  <g fill="#d7ea3f" stroke="#1a2008" stroke-width="10" stroke-linejoin="round">
-    <ellipse cx="175" cy="258" rx="29" ry="37"/>
-    <ellipse cx="226" cy="204" rx="29" ry="38"/>
-    <ellipse cx="286" cy="204" rx="29" ry="38"/>
-    <ellipse cx="337" cy="258" rx="29" ry="37"/>
-    <path d="M256 262c-38 0-80 46-80 84 0 25 21 37 42 30 13-5 25-10 38-10s25 5 38 10c21 7 42-5 42-30 0-38-42-84-80-84z"/>
+  <rect width="512" height="512" fill="#1c1410"/>
+  <path d="M104 146c2-34 26-54 62-56l190-8c38-2 60 20 62 56l10 226c2 36-20 58-58 60l-198 8c-38 2-62-20-64-56z" fill="#f0e3c6"/>
+  <g fill="#c8432a">
+    <rect x="168" y="168" width="38" height="184" rx="19" transform="rotate(6 187 260)"/>
+    <rect x="238" y="162" width="38" height="194" rx="19" transform="rotate(-5 257 259)"/>
+    <rect x="308" y="170" width="38" height="180" rx="19" transform="rotate(4 327 260)"/>
   </g>
 </svg>

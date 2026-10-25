@@ -1,55 +1,58 @@
 /* Layout: one full-height screen at a time, a single column with controls docked
-   at the bottom in thumb reach. A dog park after dark: navy night, cream dog-tag
-   cards, and the two toys of the park for the teams, tennis-ball yellow-green and
-   frisbee sky blue. */
+   at the bottom in thumb reach. A soot-dark cave wall, bone-colored cards, and the
+   two cave-painting pigments, yellow ochre and red ochre, for the two teams. */
 :root {
   color-scheme: dark;
 
-  --bg: #151b2e;
-  --surface: #212a42;
-  --surface-hi: #2d3754;
-  --line: #3d4868;
-  --paper: #fdf8ec;
-  --paper-2: #f0e8d4;
-  --ink: #161c2c;
-  --ink-soft: #6c7590;
-  --ink-line: rgba(22, 28, 44, 0.16);
-  --fg: #f2f4fb;
-  --muted: #a5aec8;
-  --danger: #ff6058;
-  --shadow: rgba(5, 8, 18, 0.55);
-  --veil: rgba(16, 21, 36, 0.96);
-  --veil-light: rgba(5, 8, 18, 0.6);
-  --glow: rgba(120, 160, 255, 0.1);
+  --cave: #1c1410;
+  --rock: #2b201a;
+  --rock-hi: #3b2d24;
+  --line: #4d3c2f;
+  --bone: #f0e3c6;
+  --bone-2: #e3cfa6;
+  --char: #22170f;
+  --char-soft: #7a6550;
+  --char-line: rgba(34, 23, 15, 0.22);
+  --fg: #f5ebd9;
+  --muted: #b9a58c;
+  --danger: #ff5b3a;
+  --shadow: rgba(8, 4, 2, 0.55);
+  --veil: rgba(22, 15, 11, 0.95);
+  --veil-light: rgba(10, 6, 4, 0.6);
+  --ember: rgba(240, 120, 40, 0.1);
 
-  --pups: #d7ea3f;
-  --pups-ink: #1a2008;
-  --pups-text: #e0f05a;
-  --pups-glow: rgba(215, 234, 63, 0.15);
-  --mutts: #6ec3ff;
-  --mutts-ink: #08203a;
-  --mutts-text: #8fd0ff;
-  --mutts-glow: rgba(110, 195, 255, 0.2);
+  --glad: #eaa832;
+  --glad-ink: #241604;
+  --glad-text: #f2b84a;
+  --glad-glow: rgba(234, 168, 50, 0.2);
+  --mad: #c8432a;
+  --mad-ink: #fff4ec;
+  --mad-text: #f2735a;
+  --mad-glow: rgba(200, 67, 42, 0.26);
 
-  --font-display: 'Fredoka', 'Arial Rounded MT Bold', 'Helvetica Neue', sans-serif;
+  --font-display: 'Londrina Solid', 'Arial Black', Impact, sans-serif;
   --font-body: 'Rubik', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 
-  --r-card: 26px;
-  --r-btn: 18px;
+  /* Slightly uneven corners, like a slab of hewn stone. */
+  --r-card: 22px 28px 20px 26px / 26px 20px 28px 22px;
+  --r-btn: 16px 19px 15px 18px / 18px 15px 19px 16px;
+
+  --noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 .9 0 0 0 0 .75 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.7' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .25 0 0 0 0 .15 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
 }
 
 .t0 {
-  --team: var(--pups);
-  --team-ink: var(--pups-ink);
-  --team-text: var(--pups-text);
-  --team-glow: var(--pups-glow);
+  --team: var(--glad);
+  --team-ink: var(--glad-ink);
+  --team-text: var(--glad-text);
+  --team-glow: var(--glad-glow);
 }
 
 .t1 {
-  --team: var(--mutts);
-  --team-ink: var(--mutts-ink);
-  --team-text: var(--mutts-text);
-  --team-glow: var(--mutts-glow);
+  --team: var(--mad);
+  --team-ink: var(--mad-ink);
+  --team-text: var(--mad-text);
+  --team-glow: var(--mad-glow);
 }
 
 /* ---------- Base ---------- */
@@ -64,7 +67,7 @@ html {
   height: 100%;
   padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: env(safe-area-inset-bottom, 0px);
-  background: var(--bg);
+  background: var(--cave);
   -webkit-text-size-adjust: 100%;
 }
 
@@ -73,8 +76,8 @@ body {
   margin: 0;
   overflow: hidden;
   overscroll-behavior: none;
-  background-color: var(--bg);
-  background-image: radial-gradient(120% 60% at 50% 115%, var(--glow), transparent 70%);
+  background-color: var(--cave);
+  background-image: radial-gradient(120% 60% at 50% 115%, var(--ember), transparent 70%), var(--noise);
   color: var(--fg);
   font: 400 16px/1.45 var(--font-body);
   -webkit-font-smoothing: antialiased;
@@ -112,7 +115,7 @@ h3 {
 }
 
 :focus-visible {
-  outline: 3px solid var(--pups-text);
+  outline: 3px solid var(--glad-text);
   outline-offset: 2px;
 }
 
@@ -165,14 +168,6 @@ h3 {
   min-width: 0;
 }
 
-/* Two buttons side by side: keep each label on one line in the wide display face. */
-.row .btn b,
-.row .btn.big b {
-  font-size: clamp(18px, 5.2vw, 24px);
-  letter-spacing: 0;
-  white-space: nowrap;
-}
-
 .topbar {
   flex: none;
   display: flex;
@@ -184,7 +179,7 @@ h3 {
 }
 
 .topbar-title {
-  font: 600 28px/1 var(--font-display);
+  font: 400 28px/1 var(--font-display);
   letter-spacing: 0.03em;
   text-transform: uppercase;
 }
@@ -219,12 +214,12 @@ h3 {
   font: 600 11px/1.2 var(--font-body);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  background: var(--ink);
-  color: var(--paper);
+  background: var(--char);
+  color: var(--bone);
 }
 
 .tag-quiet {
-  background: var(--surface-hi);
+  background: var(--rock-hi);
   color: var(--muted);
   margin-left: 4px;
 }
@@ -251,7 +246,7 @@ h3 {
   align-items: center;
   justify-content: center;
   gap: 3px;
-  background: var(--surface-hi);
+  background: var(--rock-hi);
   color: var(--fg);
   box-shadow: 0 4px 0 var(--shadow);
   cursor: pointer;
@@ -275,7 +270,7 @@ h3 {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font: 600 22px/1 var(--font-display);
+  font: 400 22px/1 var(--font-display);
   letter-spacing: 0.03em;
   text-transform: uppercase;
 }
@@ -306,8 +301,8 @@ h3 {
 }
 
 .btn-primary {
-  background: var(--paper);
-  color: var(--ink);
+  background: var(--bone);
+  color: var(--char);
 }
 
 .btn-team {
@@ -328,12 +323,12 @@ h3 {
 }
 
 .btn-danger {
-  box-shadow: inset 0 0 0 2px var(--mutts);
-  color: var(--mutts-text);
+  box-shadow: inset 0 0 0 2px var(--mad);
+  color: var(--mad-text);
 }
 
 .btn-danger:active:not(:disabled) {
-  box-shadow: inset 0 0 0 2px var(--mutts);
+  box-shadow: inset 0 0 0 2px var(--mad);
 }
 
 .link-btn {
@@ -372,7 +367,7 @@ h3 {
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: var(--surface);
+  background: var(--rock);
   color: var(--fg);
   font-size: 22px;
   cursor: pointer;
@@ -380,7 +375,7 @@ h3 {
 }
 
 .icon-text {
-  font: 600 24px/1 var(--font-display);
+  font: 400 24px/1 var(--font-display);
 }
 
 /* ---------- Segmented controls, toggles, steppers ---------- */
@@ -390,7 +385,7 @@ h3 {
   gap: 2px;
   padding: 3px;
   border-radius: 13px;
-  background: var(--bg);
+  background: var(--cave);
   box-shadow: inset 0 0 0 1px var(--line);
 }
 
@@ -411,8 +406,8 @@ h3 {
 }
 
 .seg button.is-on {
-  background: var(--paper);
-  color: var(--ink);
+  background: var(--bone);
+  color: var(--char);
 }
 
 .toggle-row {
@@ -422,7 +417,7 @@ h3 {
   gap: 14px;
   padding: 14px 16px;
   border-radius: 16px;
-  background: var(--surface);
+  background: var(--rock);
   cursor: pointer;
 }
 
@@ -453,7 +448,7 @@ h3 {
   width: 52px;
   height: 32px;
   border-radius: 16px;
-  background: var(--surface-hi);
+  background: var(--rock-hi);
   box-shadow: inset 0 0 0 1px var(--line);
   transition: background-color 0.15s ease;
 }
@@ -471,16 +466,16 @@ h3 {
 }
 
 .toggle-row input:checked + .switch {
-  background: var(--pups);
+  background: var(--glad);
 }
 
 .toggle-row input:checked + .switch::after {
   transform: translateX(20px);
-  background: var(--pups-ink);
+  background: var(--glad-ink);
 }
 
 .toggle-row input:focus-visible + .switch {
-  outline: 3px solid var(--pups-text);
+  outline: 3px solid var(--glad-text);
   outline-offset: 2px;
 }
 
@@ -496,9 +491,9 @@ h3 {
   height: 46px;
   border: 0;
   border-radius: 12px;
-  background: var(--surface-hi);
+  background: var(--rock-hi);
   color: var(--fg);
-  font: 600 26px/1 var(--font-display);
+  font: 400 26px/1 var(--font-display);
   cursor: pointer;
   touch-action: manipulation;
 }
@@ -511,7 +506,7 @@ h3 {
 .stepper output {
   min-width: 48px;
   text-align: center;
-  font: 700 30px/1 var(--font-display);
+  font: 900 30px/1 var(--font-display);
   font-variant-numeric: tabular-nums;
 }
 
@@ -523,14 +518,14 @@ h3 {
 }
 
 .stepper .chip-toggle.is-on {
-  background: var(--paper);
-  color: var(--ink);
+  background: var(--bone);
+  color: var(--char);
 }
 
 .adjust-name {
   flex: 1;
   min-width: 0;
-  font: 600 22px/1.1 var(--font-display);
+  font: 400 22px/1.1 var(--font-display);
   text-transform: uppercase;
   color: var(--team-text);
   overflow: hidden;
@@ -546,29 +541,9 @@ h3 {
   flex-direction: column;
   overflow: hidden;
   border-radius: var(--r-card);
-  background: var(--paper);
-  color: var(--ink);
+  background: var(--bone) var(--grain);
+  color: var(--char);
   box-shadow: 0 14px 34px var(--shadow);
-}
-
-/* The punched hole of a dog tag. */
-.card::before {
-  content: '';
-  position: absolute;
-  top: 12px;
-  left: 50%;
-  z-index: 1;
-  width: 12px;
-  height: 12px;
-  margin-left: -6px;
-  border-radius: 50%;
-  background: var(--bg);
-  box-shadow: inset 0 2px 3px var(--shadow);
-  pointer-events: none;
-}
-
-.card-empty::before {
-  content: none;
 }
 
 .half {
@@ -607,7 +582,7 @@ button.half:active {
 }
 
 button.half:active .half-label,
-button.half:active .paws {
+button.half:active .tally {
   color: inherit;
 }
 
@@ -631,8 +606,8 @@ button.half:active .tap-pill {
 }
 
 .half-three {
-  background: var(--paper-2);
-  border-top: 3px dashed var(--ink-line);
+  background: var(--bone-2) var(--grain);
+  border-top: 3px dashed var(--char-line);
 }
 
 .half-label {
@@ -643,18 +618,32 @@ button.half:active .tap-pill {
   font: 600 12px/1 var(--font-body);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--ink-soft);
+  color: var(--char-soft);
 }
 
-.paws {
+.tally {
   display: inline-flex;
-  gap: 1px;
-  color: var(--ink);
+  gap: 3px;
+  color: var(--char);
 }
 
-.paws svg {
-  width: 15px;
+.tally i {
+  display: block;
+  width: 4px;
   height: 15px;
+  border-radius: 2px;
+  background: currentColor;
+  transform: rotate(6deg);
+}
+
+.tally i:nth-child(2) {
+  height: 14px;
+  transform: rotate(-5deg);
+}
+
+.tally i:nth-child(3) {
+  height: 16px;
+  transform: rotate(3deg);
 }
 
 .word {
@@ -664,7 +653,7 @@ button.half:active .tap-pill {
   place-items: center;
   overflow: hidden;
   text-align: center;
-  font: 700 40px/0.95 var(--font-display);
+  font: 900 40px/0.95 var(--font-display);
   letter-spacing: 0.01em;
   text-transform: uppercase;
   overflow-wrap: normal;
@@ -703,19 +692,19 @@ button.half:active .tap-pill {
 }
 
 .logo-small {
-  font: 600 clamp(17px, 5vw, 24px)/1 var(--font-display);
-  letter-spacing: 0.08em;
+  font: 400 clamp(20px, 6vw, 28px)/1 var(--font-display);
+  letter-spacing: 0.16em;
   color: var(--muted);
 }
 
 .logo-big {
   display: block;
   width: 100%;
-  font: 700 170px/0.9 var(--font-display);
+  font: 900 170px/0.9 var(--font-display);
   white-space: nowrap;
   overflow: hidden;
-  color: var(--pups-text);
-  text-shadow: 0.05em 0.05em 0 var(--mutts);
+  color: var(--glad-text);
+  text-shadow: 0.05em 0.05em 0 var(--mad);
   padding-bottom: 0.06em;
 }
 
@@ -756,7 +745,7 @@ button.half:active .tap-pill {
   max-width: 260px;
   padding: 10px 16px;
   border-radius: 18px;
-  background: var(--surface-hi);
+  background: var(--rock-hi);
   font-size: 16px;
   font-style: italic;
 }
@@ -806,7 +795,7 @@ button.half:active .tap-pill {
   gap: 10px;
   padding: 14px 16px 16px;
   border-radius: 18px;
-  background: var(--surface);
+  background: var(--rock);
 }
 
 .team-card .field-label {
@@ -823,7 +812,7 @@ button.half:active .tap-pill {
   border-radius: 0;
   background: transparent;
   color: var(--team-text);
-  font: 700 34px/1.1 var(--font-display);
+  font: 900 34px/1.1 var(--font-display);
   text-transform: uppercase;
 }
 
@@ -851,7 +840,7 @@ button.half:active .tap-pill {
   gap: 2px;
   padding: 2px 2px 2px 12px;
   border-radius: 999px;
-  background: var(--surface-hi);
+  background: var(--rock-hi);
   font-size: 15px;
   max-width: 100%;
 }
@@ -881,7 +870,7 @@ button.half:active .tap-pill {
   padding: 10px 12px;
   border: 2px solid var(--line);
   border-radius: 12px;
-  background: var(--bg);
+  background: var(--cave);
   color: var(--fg);
   font-size: 16px;
 }
@@ -929,7 +918,7 @@ button.half:active .tap-pill {
   gap: 2px;
   padding: 12px 14px;
   border-radius: 16px;
-  background: var(--surface);
+  background: var(--rock);
   border-top: 5px solid var(--team);
 }
 
@@ -949,7 +938,7 @@ button.half:active .tap-pill {
 }
 
 .sb-score {
-  font: 700 46px/1 var(--font-display);
+  font: 900 46px/1 var(--font-display);
   font-variant-numeric: tabular-nums;
 }
 
@@ -965,7 +954,7 @@ button.half:active .tap-pill {
 .team-title {
   width: 100%;
   overflow: hidden;
-  font: 700 120px/0.9 var(--font-display);
+  font: 900 120px/0.9 var(--font-display);
   white-space: nowrap;
   text-transform: uppercase;
   color: var(--team-text);
@@ -993,7 +982,7 @@ button.half:active .tap-pill {
   padding: 0 14px;
   border: 0;
   border-radius: 999px;
-  background: var(--surface);
+  background: var(--rock);
   box-shadow: inset 0 0 0 1px var(--line);
   color: var(--muted);
   font-size: 14px;
@@ -1025,14 +1014,14 @@ button.half:active .tap-pill {
   gap: 12px;
   padding: 12px 14px;
   border-radius: 14px;
-  background: var(--surface);
+  background: var(--rock);
 }
 
 .steps li::before {
   content: counter(step);
   flex: none;
   width: 14px;
-  font: 700 22px/1 var(--font-display);
+  font: 900 22px/1 var(--font-display);
   color: var(--team-text);
 }
 
@@ -1061,19 +1050,19 @@ button.half:active .tap-pill {
   gap: 4px;
   margin-top: 8px;
   padding: 14px 16px 16px;
-  border-radius: 18px;
-  background: var(--paper);
-  color: var(--ink);
+  border-radius: var(--r-card);
+  background: var(--bone);
+  color: var(--char);
   text-align: left;
   box-shadow: 0 10px 24px var(--shadow);
 }
 
 .rule-card .eyebrow {
-  color: var(--ink-soft);
+  color: var(--char-soft);
 }
 
 .rule-name {
-  font: 700 34px/1 var(--font-display);
+  font: 900 36px/1 var(--font-display);
   text-transform: uppercase;
 }
 
@@ -1085,7 +1074,7 @@ button.half:active .tap-pill {
 .rule-example {
   font-size: 14px;
   font-style: italic;
-  color: var(--ink-soft);
+  color: var(--char-soft);
 }
 
 .rule-example span {
@@ -1097,14 +1086,18 @@ button.half:active .tap-pill {
   display: inline-block;
   padding: 6px 12px;
   border-radius: 999px;
-  background: var(--surface-hi);
+  background: var(--rock-hi);
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.04em;
-  color: var(--pups-text);
+  color: var(--glad-text);
 }
 
 /* ---------- Turn ---------- */
+
+.turn {
+  gap: 10px;
+}
 
 .rule-strip {
   flex: none;
@@ -1114,7 +1107,7 @@ button.half:active .tap-pill {
   min-width: 0;
   padding: 8px 12px;
   border-radius: 12px;
-  background: var(--surface);
+  background: var(--rock);
   font-size: 13px;
   color: var(--muted);
   white-space: nowrap;
@@ -1123,7 +1116,7 @@ button.half:active .tap-pill {
 
 .rule-strip b {
   flex: none;
-  font: 600 16px/1 var(--font-display);
+  font: 400 18px/1 var(--font-display);
   letter-spacing: 0.03em;
   text-transform: uppercase;
   color: var(--team-text);
@@ -1132,10 +1125,6 @@ button.half:active .tap-pill {
 .rule-strip span {
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.turn {
-  gap: 10px;
 }
 
 .turn-top {
@@ -1167,7 +1156,7 @@ button.half:active .tap-pill {
 .clock {
   min-width: 3.4ch;
   text-align: center;
-  font: 700 46px/1 var(--font-display);
+  font: 900 46px/1 var(--font-display);
   font-variant-numeric: tabular-nums;
 }
 
@@ -1185,7 +1174,7 @@ button.half:active .tap-pill {
   height: 8px;
   overflow: hidden;
   border-radius: 4px;
-  background: var(--surface);
+  background: var(--rock);
 }
 
 .timebar i {
@@ -1228,7 +1217,7 @@ button.half:active .tap-pill {
 .turn-score {
   min-width: 0;
   overflow: hidden;
-  font: 600 24px/1 var(--font-display);
+  font: 400 24px/1 var(--font-display);
   text-overflow: ellipsis;
   text-transform: uppercase;
   white-space: nowrap;
@@ -1307,13 +1296,13 @@ button.half:active .tap-pill {
 }
 
 .countdown-rule {
-  font: 700 28px/1 var(--font-display);
+  font: 900 30px/1 var(--font-display);
   text-transform: uppercase;
   opacity: 0.85;
 }
 
 .countdown-num {
-  font: 700 min(60vw, 320px)/1 var(--font-display);
+  font: 900 min(60vw, 320px)/1 var(--font-display);
   animation: pop 0.6s ease-out both;
 }
 
@@ -1323,7 +1312,7 @@ button.half:active .tap-pill {
 }
 
 .pause-time {
-  font: 700 96px/1 var(--font-display);
+  font: 900 96px/1 var(--font-display);
   font-variant-numeric: tabular-nums;
 }
 
@@ -1341,7 +1330,7 @@ button.half:active .tap-pill {
 }
 
 .timeup .stamp {
-  font: 700 min(34vw, 190px)/1 var(--font-display);
+  font: 900 min(34vw, 190px)/1 var(--font-display);
   text-transform: uppercase;
   color: var(--danger);
   transform: rotate(-8deg);
@@ -1354,7 +1343,7 @@ button.half:active .tap-pill {
   top: 42%;
   z-index: 15;
   pointer-events: none;
-  font: 700 130px/1 var(--font-display);
+  font: 900 130px/1 var(--font-display);
   text-shadow: 0 6px 0 var(--shadow);
   white-space: nowrap;
   animation: fx-pop 0.75s ease-out forwards;
@@ -1384,7 +1373,7 @@ button.half:active .tap-pill {
 }
 
 .card.is-banked .half-one .half-label,
-.card.is-banked .half-one .paws {
+.card.is-banked .half-one .tally {
   color: inherit;
 }
 
@@ -1427,7 +1416,7 @@ button.half:active .tap-pill {
 }
 
 .review-total {
-  font: 700 64px/1 var(--font-display);
+  font: 900 64px/1 var(--font-display);
   text-transform: uppercase;
   color: var(--team-text);
   overflow-wrap: anywhere;
@@ -1459,7 +1448,7 @@ button.half:active .tap-pill {
   gap: 10px;
   padding: 8px 8px 8px 14px;
   border-radius: 14px;
-  background: var(--surface);
+  background: var(--rock);
 }
 
 .rv-words {
@@ -1471,7 +1460,7 @@ button.half:active .tap-pill {
 }
 
 .rv-one {
-  font: 600 20px/1.1 var(--font-display);
+  font: 400 20px/1.1 var(--font-display);
   text-transform: uppercase;
 }
 
@@ -1491,7 +1480,7 @@ button.half:active .tap-pill {
 
 .seg-result button.is-on[data-value='skip'] {
   background: var(--danger);
-  color: var(--ink);
+  color: var(--char);
 }
 
 .seg-result button.is-on[data-value='one'],
@@ -1520,7 +1509,7 @@ button.half:active .tap-pill {
 .winner {
   width: 100%;
   overflow: hidden;
-  font: 700 112px/0.9 var(--font-display);
+  font: 900 112px/0.9 var(--font-display);
   white-space: nowrap;
   text-transform: uppercase;
   color: var(--team-text, var(--fg));
@@ -1529,7 +1518,7 @@ button.half:active .tap-pill {
 }
 
 .over.is-tie .winner {
-  color: var(--paper);
+  color: var(--bone);
 }
 
 .over-line {
@@ -1553,7 +1542,7 @@ button.half:active .tap-pill {
   gap: 4px;
   padding: 12px 14px;
   border-radius: 16px;
-  background: var(--surface);
+  background: var(--rock);
 }
 
 .award:last-child:nth-child(odd) {
@@ -1562,7 +1551,7 @@ button.half:active .tap-pill {
 
 .award-value {
   overflow-wrap: anywhere;
-  font: 600 26px/1.05 var(--font-display);
+  font: 400 26px/1.05 var(--font-display);
   text-transform: uppercase;
 }
 
@@ -1602,7 +1591,7 @@ button.half:active .tap-pill {
   padding-left: max(18px, env(safe-area-inset-left, 0px));
   padding-right: max(18px, env(safe-area-inset-right, 0px));
   border-radius: 24px 24px 0 0;
-  background: var(--surface);
+  background: var(--rock);
   box-shadow: 0 -10px 40px var(--shadow);
   animation: sheet-up 0.26s cubic-bezier(0.2, 0.9, 0.3, 1) both;
 }
@@ -1616,15 +1605,15 @@ button.half:active .tap-pill {
   justify-content: space-between;
   gap: 12px;
   padding-block: 16px 12px;
-  background: var(--surface);
+  background: var(--rock);
 }
 
 .sheet-head .icon-btn {
-  background: var(--surface-hi);
+  background: var(--rock-hi);
 }
 
 .sheet-title {
-  font: 600 30px/1 var(--font-display);
+  font: 400 30px/1 var(--font-display);
   letter-spacing: 0.02em;
   text-transform: uppercase;
 }
@@ -1652,8 +1641,8 @@ button.half:active .tap-pill {
   position: absolute;
   top: 0;
   left: 0;
-  font: 700 24px/1 var(--font-display);
-  color: var(--pups-text);
+  font: 900 24px/1 var(--font-display);
+  color: var(--glad-text);
 }
 
 .rules b {
@@ -1664,7 +1653,7 @@ button.half:active .tap-pill {
 
 .sheet-subtitle {
   margin: 4px 0 10px;
-  font: 600 22px/1 var(--font-display);
+  font: 400 24px/1 var(--font-display);
   text-transform: uppercase;
 }
 
@@ -1682,7 +1671,7 @@ button.half:active .tap-pill {
   gap: 2px;
   padding: 10px 12px;
   border-radius: 12px;
-  background: var(--surface-hi);
+  background: var(--rock-hi);
   font-size: 14px;
   color: var(--muted);
 }
@@ -1700,19 +1689,19 @@ button.half:active .tap-pill {
 }
 
 .menu-list .toggle-row {
-  background: var(--surface-hi);
+  background: var(--rock-hi);
 }
 
 .menu-list .seg {
-  background: var(--surface-hi);
+  background: var(--rock-hi);
 }
 
 .menu-list .stepper button {
-  background: var(--bg);
+  background: var(--cave);
 }
 
 .menu-list .stepper .chip-toggle.is-on {
-  background: var(--paper);
+  background: var(--bone);
 }
 
 .adjust + .adjust {
@@ -1730,8 +1719,8 @@ button.half:active .tap-pill {
   max-width: calc(100% - 32px);
   padding: 10px 18px;
   border-radius: 999px;
-  background: var(--paper);
-  color: var(--ink);
+  background: var(--bone);
+  color: var(--char);
   font-size: 14px;
   font-weight: 600;
   text-align: center;
