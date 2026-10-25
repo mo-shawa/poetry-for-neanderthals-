@@ -1,39 +1,39 @@
 /* Layout: one full-height screen at a time, a single column with controls docked
-   at the bottom in thumb reach. A soot-dark cave wall, bone-colored cards, and the
-   two cave-painting pigments, yellow ochre and red ochre, for the two teams. */
+   at the bottom in thumb reach. Warm dark background, cream cards, and a warm
+   yellow and a warm red for the two teams. */
 :root {
   color-scheme: dark;
 
-  --cave: #1c1410;
-  --rock: #2b201a;
-  --rock-hi: #3b2d24;
+  --bg: #1c1410;
+  --surface: #2b201a;
+  --surface-hi: #3b2d24;
   --line: #4d3c2f;
-  --bone: #f0e3c6;
-  --bone-2: #e3cfa6;
-  --char: #22170f;
-  --char-soft: #7a6550;
-  --char-line: rgba(34, 23, 15, 0.22);
+  --paper: #f0e3c6;
+  --paper-2: #e3cfa6;
+  --ink: #22170f;
+  --ink-soft: #7a6550;
+  --ink-line: rgba(34, 23, 15, 0.22);
   --fg: #f5ebd9;
   --muted: #b9a58c;
   --danger: #ff5b3a;
   --shadow: rgba(8, 4, 2, 0.55);
   --veil: rgba(22, 15, 11, 0.95);
   --veil-light: rgba(10, 6, 4, 0.6);
-  --ember: rgba(240, 120, 40, 0.1);
+  --glow: rgba(240, 120, 40, 0.1);
 
-  --glad: #eaa832;
-  --glad-ink: #241604;
-  --glad-text: #f2b84a;
-  --glad-glow: rgba(234, 168, 50, 0.2);
-  --mad: #c8432a;
-  --mad-ink: #fff4ec;
-  --mad-text: #f2735a;
-  --mad-glow: rgba(200, 67, 42, 0.26);
+  --team-a: #eaa832;
+  --team-a-ink: #241604;
+  --team-a-text: #f2b84a;
+  --team-a-glow: rgba(234, 168, 50, 0.2);
+  --team-b: #c8432a;
+  --team-b-ink: #fff4ec;
+  --team-b-text: #f2735a;
+  --team-b-glow: rgba(200, 67, 42, 0.26);
 
   --font-display: 'Londrina Solid', 'Arial Black', Impact, sans-serif;
   --font-body: 'Rubik', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 
-  /* Slightly uneven corners, like a slab of hewn stone. */
+  /* Slightly uneven corners for a hand-cut look. */
   --r-card: 22px 28px 20px 26px / 26px 20px 28px 22px;
   --r-btn: 16px 19px 15px 18px / 18px 15px 19px 16px;
 
@@ -42,17 +42,17 @@
 }
 
 .t0 {
-  --team: var(--glad);
-  --team-ink: var(--glad-ink);
-  --team-text: var(--glad-text);
-  --team-glow: var(--glad-glow);
+  --team: var(--team-a);
+  --team-ink: var(--team-a-ink);
+  --team-text: var(--team-a-text);
+  --team-glow: var(--team-a-glow);
 }
 
 .t1 {
-  --team: var(--mad);
-  --team-ink: var(--mad-ink);
-  --team-text: var(--mad-text);
-  --team-glow: var(--mad-glow);
+  --team: var(--team-b);
+  --team-ink: var(--team-b-ink);
+  --team-text: var(--team-b-text);
+  --team-glow: var(--team-b-glow);
 }
 
 /* ---------- Base ---------- */
@@ -67,7 +67,7 @@ html {
   height: 100%;
   padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: env(safe-area-inset-bottom, 0px);
-  background: var(--cave);
+  background: var(--bg);
   -webkit-text-size-adjust: 100%;
 }
 
@@ -76,8 +76,8 @@ body {
   margin: 0;
   overflow: hidden;
   overscroll-behavior: none;
-  background-color: var(--cave);
-  background-image: radial-gradient(120% 60% at 50% 115%, var(--ember), transparent 70%), var(--noise);
+  background-color: var(--bg);
+  background-image: radial-gradient(120% 60% at 50% 115%, var(--glow), transparent 70%), var(--noise);
   color: var(--fg);
   font: 400 16px/1.45 var(--font-body);
   -webkit-font-smoothing: antialiased;
@@ -115,7 +115,7 @@ h3 {
 }
 
 :focus-visible {
-  outline: 3px solid var(--glad-text);
+  outline: 3px solid var(--team-a-text);
   outline-offset: 2px;
 }
 
@@ -214,12 +214,12 @@ h3 {
   font: 600 11px/1.2 var(--font-body);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  background: var(--char);
-  color: var(--bone);
+  background: var(--ink);
+  color: var(--paper);
 }
 
 .tag-quiet {
-  background: var(--rock-hi);
+  background: var(--surface-hi);
   color: var(--muted);
   margin-left: 4px;
 }
@@ -246,7 +246,7 @@ h3 {
   align-items: center;
   justify-content: center;
   gap: 3px;
-  background: var(--rock-hi);
+  background: var(--surface-hi);
   color: var(--fg);
   box-shadow: 0 4px 0 var(--shadow);
   cursor: pointer;
@@ -301,8 +301,8 @@ h3 {
 }
 
 .btn-primary {
-  background: var(--bone);
-  color: var(--char);
+  background: var(--paper);
+  color: var(--ink);
 }
 
 .btn-team {
@@ -323,12 +323,12 @@ h3 {
 }
 
 .btn-danger {
-  box-shadow: inset 0 0 0 2px var(--mad);
-  color: var(--mad-text);
+  box-shadow: inset 0 0 0 2px var(--team-b);
+  color: var(--team-b-text);
 }
 
 .btn-danger:active:not(:disabled) {
-  box-shadow: inset 0 0 0 2px var(--mad);
+  box-shadow: inset 0 0 0 2px var(--team-b);
 }
 
 .link-btn {
@@ -367,7 +367,7 @@ h3 {
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: var(--rock);
+  background: var(--surface);
   color: var(--fg);
   font-size: 22px;
   cursor: pointer;
@@ -385,7 +385,7 @@ h3 {
   gap: 2px;
   padding: 3px;
   border-radius: 13px;
-  background: var(--cave);
+  background: var(--bg);
   box-shadow: inset 0 0 0 1px var(--line);
 }
 
@@ -406,8 +406,8 @@ h3 {
 }
 
 .seg button.is-on {
-  background: var(--bone);
-  color: var(--char);
+  background: var(--paper);
+  color: var(--ink);
 }
 
 .toggle-row {
@@ -417,7 +417,7 @@ h3 {
   gap: 14px;
   padding: 14px 16px;
   border-radius: 16px;
-  background: var(--rock);
+  background: var(--surface);
   cursor: pointer;
 }
 
@@ -448,7 +448,7 @@ h3 {
   width: 52px;
   height: 32px;
   border-radius: 16px;
-  background: var(--rock-hi);
+  background: var(--surface-hi);
   box-shadow: inset 0 0 0 1px var(--line);
   transition: background-color 0.15s ease;
 }
@@ -466,16 +466,16 @@ h3 {
 }
 
 .toggle-row input:checked + .switch {
-  background: var(--glad);
+  background: var(--team-a);
 }
 
 .toggle-row input:checked + .switch::after {
   transform: translateX(20px);
-  background: var(--glad-ink);
+  background: var(--team-a-ink);
 }
 
 .toggle-row input:focus-visible + .switch {
-  outline: 3px solid var(--glad-text);
+  outline: 3px solid var(--team-a-text);
   outline-offset: 2px;
 }
 
@@ -491,7 +491,7 @@ h3 {
   height: 46px;
   border: 0;
   border-radius: 12px;
-  background: var(--rock-hi);
+  background: var(--surface-hi);
   color: var(--fg);
   font: 400 26px/1 var(--font-display);
   cursor: pointer;
@@ -518,8 +518,8 @@ h3 {
 }
 
 .stepper .chip-toggle.is-on {
-  background: var(--bone);
-  color: var(--char);
+  background: var(--paper);
+  color: var(--ink);
 }
 
 .adjust-name {
@@ -541,8 +541,8 @@ h3 {
   flex-direction: column;
   overflow: hidden;
   border-radius: var(--r-card);
-  background: var(--bone) var(--grain);
-  color: var(--char);
+  background: var(--paper) var(--grain);
+  color: var(--ink);
   box-shadow: 0 14px 34px var(--shadow);
 }
 
@@ -606,8 +606,8 @@ button.half:active .tap-pill {
 }
 
 .half-three {
-  background: var(--bone-2) var(--grain);
-  border-top: 3px dashed var(--char-line);
+  background: var(--paper-2) var(--grain);
+  border-top: 3px dashed var(--ink-line);
 }
 
 .half-label {
@@ -618,13 +618,13 @@ button.half:active .tap-pill {
   font: 600 12px/1 var(--font-body);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--char-soft);
+  color: var(--ink-soft);
 }
 
 .tally {
   display: inline-flex;
   gap: 3px;
-  color: var(--char);
+  color: var(--ink);
 }
 
 .tally i {
@@ -703,8 +703,8 @@ button.half:active .tap-pill {
   font: 900 170px/0.9 var(--font-display);
   white-space: nowrap;
   overflow: hidden;
-  color: var(--glad-text);
-  text-shadow: 0.05em 0.05em 0 var(--mad);
+  color: var(--team-a-text);
+  text-shadow: 0.05em 0.05em 0 var(--team-b);
   padding-bottom: 0.06em;
 }
 
@@ -745,7 +745,7 @@ button.half:active .tap-pill {
   max-width: 260px;
   padding: 10px 16px;
   border-radius: 18px;
-  background: var(--rock-hi);
+  background: var(--surface-hi);
   font-size: 16px;
   font-style: italic;
 }
@@ -795,7 +795,7 @@ button.half:active .tap-pill {
   gap: 10px;
   padding: 14px 16px 16px;
   border-radius: 18px;
-  background: var(--rock);
+  background: var(--surface);
 }
 
 .team-card .field-label {
@@ -840,7 +840,7 @@ button.half:active .tap-pill {
   gap: 2px;
   padding: 2px 2px 2px 12px;
   border-radius: 999px;
-  background: var(--rock-hi);
+  background: var(--surface-hi);
   font-size: 15px;
   max-width: 100%;
 }
@@ -870,7 +870,7 @@ button.half:active .tap-pill {
   padding: 10px 12px;
   border: 2px solid var(--line);
   border-radius: 12px;
-  background: var(--cave);
+  background: var(--bg);
   color: var(--fg);
   font-size: 16px;
 }
@@ -918,7 +918,7 @@ button.half:active .tap-pill {
   gap: 2px;
   padding: 12px 14px;
   border-radius: 16px;
-  background: var(--rock);
+  background: var(--surface);
   border-top: 5px solid var(--team);
 }
 
@@ -982,7 +982,7 @@ button.half:active .tap-pill {
   padding: 0 14px;
   border: 0;
   border-radius: 999px;
-  background: var(--rock);
+  background: var(--surface);
   box-shadow: inset 0 0 0 1px var(--line);
   color: var(--muted);
   font-size: 14px;
@@ -1014,7 +1014,7 @@ button.half:active .tap-pill {
   gap: 12px;
   padding: 12px 14px;
   border-radius: 14px;
-  background: var(--rock);
+  background: var(--surface);
 }
 
 .steps li::before {
@@ -1051,14 +1051,14 @@ button.half:active .tap-pill {
   margin-top: 8px;
   padding: 14px 16px 16px;
   border-radius: var(--r-card);
-  background: var(--bone);
-  color: var(--char);
+  background: var(--paper);
+  color: var(--ink);
   text-align: left;
   box-shadow: 0 10px 24px var(--shadow);
 }
 
 .rule-card .eyebrow {
-  color: var(--char-soft);
+  color: var(--ink-soft);
 }
 
 .rule-name {
@@ -1074,7 +1074,7 @@ button.half:active .tap-pill {
 .rule-example {
   font-size: 14px;
   font-style: italic;
-  color: var(--char-soft);
+  color: var(--ink-soft);
 }
 
 .rule-example span {
@@ -1086,11 +1086,11 @@ button.half:active .tap-pill {
   display: inline-block;
   padding: 6px 12px;
   border-radius: 999px;
-  background: var(--rock-hi);
+  background: var(--surface-hi);
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.04em;
-  color: var(--glad-text);
+  color: var(--team-a-text);
 }
 
 /* ---------- Turn ---------- */
@@ -1107,7 +1107,7 @@ button.half:active .tap-pill {
   min-width: 0;
   padding: 8px 12px;
   border-radius: 12px;
-  background: var(--rock);
+  background: var(--surface);
   font-size: 13px;
   color: var(--muted);
   white-space: nowrap;
@@ -1174,7 +1174,7 @@ button.half:active .tap-pill {
   height: 8px;
   overflow: hidden;
   border-radius: 4px;
-  background: var(--rock);
+  background: var(--surface);
 }
 
 .timebar i {
@@ -1448,7 +1448,7 @@ button.half:active .tap-pill {
   gap: 10px;
   padding: 8px 8px 8px 14px;
   border-radius: 14px;
-  background: var(--rock);
+  background: var(--surface);
 }
 
 .rv-words {
@@ -1480,7 +1480,7 @@ button.half:active .tap-pill {
 
 .seg-result button.is-on[data-value='skip'] {
   background: var(--danger);
-  color: var(--char);
+  color: var(--ink);
 }
 
 .seg-result button.is-on[data-value='one'],
@@ -1518,7 +1518,7 @@ button.half:active .tap-pill {
 }
 
 .over.is-tie .winner {
-  color: var(--bone);
+  color: var(--paper);
 }
 
 .over-line {
@@ -1542,7 +1542,7 @@ button.half:active .tap-pill {
   gap: 4px;
   padding: 12px 14px;
   border-radius: 16px;
-  background: var(--rock);
+  background: var(--surface);
 }
 
 .award:last-child:nth-child(odd) {
@@ -1591,7 +1591,7 @@ button.half:active .tap-pill {
   padding-left: max(18px, env(safe-area-inset-left, 0px));
   padding-right: max(18px, env(safe-area-inset-right, 0px));
   border-radius: 24px 24px 0 0;
-  background: var(--rock);
+  background: var(--surface);
   box-shadow: 0 -10px 40px var(--shadow);
   animation: sheet-up 0.26s cubic-bezier(0.2, 0.9, 0.3, 1) both;
 }
@@ -1605,11 +1605,11 @@ button.half:active .tap-pill {
   justify-content: space-between;
   gap: 12px;
   padding-block: 16px 12px;
-  background: var(--rock);
+  background: var(--surface);
 }
 
 .sheet-head .icon-btn {
-  background: var(--rock-hi);
+  background: var(--surface-hi);
 }
 
 .sheet-title {
@@ -1642,7 +1642,7 @@ button.half:active .tap-pill {
   top: 0;
   left: 0;
   font: 900 24px/1 var(--font-display);
-  color: var(--glad-text);
+  color: var(--team-a-text);
 }
 
 .rules b {
@@ -1671,7 +1671,7 @@ button.half:active .tap-pill {
   gap: 2px;
   padding: 10px 12px;
   border-radius: 12px;
-  background: var(--rock-hi);
+  background: var(--surface-hi);
   font-size: 14px;
   color: var(--muted);
 }
@@ -1679,6 +1679,25 @@ button.half:active .tap-pill {
 .rule-list b {
   font-weight: 600;
   color: var(--fg);
+}
+
+.about {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 8px;
+  font-size: 15px;
+  color: var(--muted);
+}
+
+.about .sheet-subtitle {
+  margin: 8px 0 0;
+  color: var(--fg);
+}
+
+.about a {
+  color: var(--fg);
+  text-underline-offset: 3px;
 }
 
 .menu-list {
@@ -1689,19 +1708,19 @@ button.half:active .tap-pill {
 }
 
 .menu-list .toggle-row {
-  background: var(--rock-hi);
+  background: var(--surface-hi);
 }
 
 .menu-list .seg {
-  background: var(--rock-hi);
+  background: var(--surface-hi);
 }
 
 .menu-list .stepper button {
-  background: var(--cave);
+  background: var(--bg);
 }
 
 .menu-list .stepper .chip-toggle.is-on {
-  background: var(--bone);
+  background: var(--paper);
 }
 
 .adjust + .adjust {
@@ -1719,8 +1738,8 @@ button.half:active .tap-pill {
   max-width: calc(100% - 32px);
   padding: 10px 18px;
   border-radius: 999px;
-  background: var(--bone);
-  color: var(--char);
+  background: var(--paper);
+  color: var(--ink);
   font-size: 14px;
   font-weight: 600;
   text-align: center;
