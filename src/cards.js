@@ -788,7 +788,7 @@ export const CARDS = [
   ['Gas', 'Laughing gas'],
   ['Stop', 'Stop sign'],
 
-  // Stone Age
+  // Odds and ends
   ['Pebble', 'Fruity Pebbles'],
   ['Flint', 'The Flintstones'],
   ['Mammoth', 'Woolly mammoth'],
@@ -864,6 +864,17 @@ export const CARDS = [
   ['Grill', 'Grilled cheese'],
   ['Dish', 'Dishwasher'],
   ['Shave', 'Close shave'],
+  // Dogs
+  ['Poodle', 'Poodle skirt'],
+  ['Collar', 'Blue-collar'],
+  ['Husky', 'Husky voice'],
+  ['Boxer', 'Boxer shorts'],
+  ['Lab', 'Lab coat'],
+  ['Collie', 'Border collie'],
+  ['Dalmatian', '101 Dalmatians'],
+  ['Treat', 'Trick or treat'],
+  ['Howl', 'Howl at the moon'],
+  ['Fetch', 'Make fetch happen'],
 ];
 
 /** Stable id for a card: its 1-point word, lowercased. */

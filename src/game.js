@@ -1,27 +1,45 @@
+import { TALK_RULES, CLASSIC_RULE } from './talk-rules.js';
+
 // Pure game rules. No DOM, no clock: callers pass `now` and a `draw()` that
 // returns the next [onePointWord, threePointWord] card.
 //
-// Card results, all scored for the poet's team:
+// The player describing the card is the "talker" (shown as "It" in the app).
+// Card results, all scored for the talker's team:
 //   'one'   got the top word: +1
 //   'three' got the bottom word: +3 (a card is worth 3 at most)
-//   'skip'  skipped, or the poet broke a rule: -1
+//   'skip'  skipped, or the talker broke a rule: -1
 //   'none'  no score (time ran out mid-card, or set in review)
-// While the poet goes for the bottom word after getting the top one, the card
+// While the talker goes for the bottom word after getting the top one, the card
 // is "banked": it counts as 'one' until something else happens.
 
-export const DEFAULT_SETTINGS = { seconds: 90, rounds: 5 };
-export const DEFAULT_TEAM_NAMES = ['Glad', 'Mad'];
+export const DEFAULT_SETTINGS = { seconds: 90, rounds: 5, talk: 'mix' };
+export const DEFAULT_TEAM_NAMES = ['Pups', 'Mutts'];
 export const POINTS = { one: 1, three: 3, skip: -1, none: 0 };
 
 const MAX_UNDO = 60;
 
-export function createGame({ teams, settings = {}, firstTeam = 0 }) {
+/**
+ * Order of talk rules by round. Round 1 is always One syllable so everyone
+ * learns the game on the simplest rule; the rest are shuffled.
+ */
+function talkRuleOrder(rng) {
+  const rest = TALK_RULES.map((r) => r.id).filter((id) => id !== CLASSIC_RULE);
+  for (let i = rest.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [rest[i], rest[j]] = [rest[j], rest[i]];
+  }
+  return [CLASSIC_RULE, ...rest];
+}
+
+export function createGame({ teams, settings = {}, firstTeam = 0, rng = Math.random }) {
   const seconds = settings.seconds ?? DEFAULT_SETTINGS.seconds;
   const rounds = settings.rounds ?? DEFAULT_SETTINGS.rounds;
+  const talk = settings.talk === 'classic' ? 'classic' : 'mix';
   return {
-    v: 2,
-    settings: { seconds, rounds },
+    v: 3,
+    settings: { seconds, rounds, talk },
     baseRounds: rounds,
+    ruleOrder: talkRuleOrder(rng),
     teams: teams.map((team, i) => ({
       name: team.name.trim() || DEFAULT_TEAM_NAMES[i] || `Team ${i + 1}`,
       players: team.players.map((p) => p.trim()).filter(Boolean),
@@ -37,7 +55,7 @@ export function createGame({ teams, settings = {}, firstTeam = 0 }) {
 
 /** Returns the saved game if it looks valid, otherwise null. */
 export function restore(saved) {
-  if (!saved || saved.v !== 2 || !Array.isArray(saved.teams) || saved.teams.length < 2) return null;
+  if (!saved || saved.v !== 3 || !Array.isArray(saved.teams) || saved.teams.length < 2) return null;
   if (!['ready', 'turn', 'review', 'over'].includes(saved.phase)) return null;
   if ((saved.phase === 'turn' || saved.phase === 'review') && !saved.turn) return null;
   return saved;
@@ -55,18 +73,24 @@ export function isFinalTurn(g) {
   return g.settings.rounds > 0 && g.turns.length + 1 >= g.settings.rounds * g.teams.length;
 }
 
-/** Name of the player due to be poet for a team, or null if the team has no names. */
-export function poetFor(g, team = activeTeam(g)) {
+/** Id of the talk rule for a round (defaults to the current round). */
+export function talkRuleFor(g, round = currentRound(g)) {
+  if (g.settings.talk === 'classic') return CLASSIC_RULE;
+  return g.ruleOrder[(round - 1) % g.ruleOrder.length];
+}
+
+/** Name of the player due to talk for a team, or null if the team has no names. */
+export function talkerFor(g, team = activeTeam(g)) {
   const { players, next } = g.teams[team];
   return players.length ? players[next % players.length] : null;
 }
 
-export function choosePoet(g, index) {
+export function chooseTalker(g, index) {
   const team = g.teams[activeTeam(g)];
   if (index >= 0 && index < team.players.length) team.next = index;
 }
 
-/** Points the poet's team earned in one turn (finished or in progress). */
+/** Points the talker's team earned in one turn (finished or in progress). */
 export function turnPoints(turn) {
   let pts = 0;
   for (const card of turn.cards) pts += POINTS[card.result ?? (card.banked ? 'one' : 'none')] ?? 0;
@@ -101,8 +125,9 @@ export function startTurn(g, now, draw) {
   const total = g.settings.seconds * 1000;
   g.turn = {
     team,
-    poet: poetFor(g, team),
+    talker: talkerFor(g, team),
     round: currentRound(g),
+    rule: talkRuleFor(g),
     total,
     endsAt: now + total,
     left: null, // ms remaining while paused; null while running
@@ -128,10 +153,10 @@ export function currentCard(turn) {
 /**
  * Apply a press on the card on screen.
  *   'one'   the team got the top word: bank +1 and keep the card up so the
- *           poet can go for the bottom word
+ *           talker can go for the bottom word
  *   'next'  keep the banked +1 and move on
  *   'three' the team got the bottom word: the card is worth 3
- *   'skip'  give up on the card, or the poet broke a rule: -1, and any
+ *   'skip'  give up on the card, or the talker broke a rule: -1, and any
  *           banked point is lost
  * Returns 'banked' or 'dealt', or null when the press did nothing.
  */
@@ -188,7 +213,7 @@ export function resume(g, now) {
   turn.left = null;
 }
 
-/** Time's up (or the poet ended early). A banked card keeps its 1 point. */
+/** Time's up (or the talker ended early). A banked card keeps its 1 point. */
 export function endTurn(g) {
   const turn = g.turn;
   if (g.phase !== 'turn' || !turn) return;
@@ -217,13 +242,14 @@ export function finishTurn(g) {
   const turn = g.turn;
   g.turns.push({
     team: turn.team,
-    poet: turn.poet,
+    talker: turn.talker,
     round: turn.round,
+    rule: turn.rule,
     cards: turn.cards.map(({ one, three, result }) => ({ one, three, result })),
   });
   const team = g.teams[turn.team];
   if (team.players.length) {
-    const i = team.players.indexOf(turn.poet);
+    const i = team.players.indexOf(turn.talker);
     team.next = ((i >= 0 ? i : team.next) + 1) % team.players.length;
   }
   g.turn = null;
@@ -256,7 +282,7 @@ export function rematch(g) {
 }
 
 export function stats(g) {
-  const poets = new Map();
+  const talkers = new Map();
   let best = null;
   let cards = 0;
   let threes = 0;
@@ -264,16 +290,16 @@ export function stats(g) {
     const pts = turnPoints(turn);
     cards += turn.cards.length;
     threes += turn.cards.filter((c) => c.result === 'three').length;
-    if (!best || pts > best.points) best = { team: turn.team, poet: turn.poet, round: turn.round, points: pts };
-    if (turn.poet) {
-      const key = `${turn.team}:${turn.poet}`;
-      const p = poets.get(key) ?? { name: turn.poet, team: turn.team, points: 0, skips: 0 };
+    if (!best || pts > best.points) best = { team: turn.team, talker: turn.talker, round: turn.round, points: pts };
+    if (turn.talker) {
+      const key = `${turn.team}:${turn.talker}`;
+      const p = talkers.get(key) ?? { name: turn.talker, team: turn.team, points: 0, skips: 0 };
       p.points += pts;
       p.skips += turn.cards.filter((c) => c.result === 'skip').length;
-      poets.set(key, p);
+      talkers.set(key, p);
     }
   }
-  const list = [...poets.values()];
+  const list = [...talkers.values()];
   const mvp = list.reduce((a, b) => (!a || b.points > a.points ? b : a), null);
   const skipper = list.filter((p) => p.skips > 0).reduce((a, b) => (!a || b.skips > a.skips ? b : a), null);
   return { cards, threes, best, mvp, skipper };

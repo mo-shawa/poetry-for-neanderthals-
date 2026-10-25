@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as G from '../src/game.js';
+import { TALK_RULES } from '../src/talk-rules.js';
 
 function dealer() {
   let n = 0;
@@ -13,8 +14,8 @@ function dealer() {
 function newGame(opts = {}) {
   return G.createGame({
     teams: [
-      { name: 'Glad', players: opts.gladPlayers ?? [] },
-      { name: 'Mad', players: opts.madPlayers ?? [] },
+      { name: 'Pups', players: opts.pupsPlayers ?? [] },
+      { name: 'Mutts', players: opts.muttsPlayers ?? [] },
     ],
     settings: opts.settings,
   });
@@ -81,7 +82,7 @@ test('skip costs 1, and skipping a banked card loses its point too', () => {
   assert.equal(G.turnPoints(g.turn), -2);
 });
 
-test('only the poet team scores, and scores can go negative', () => {
+test('only the talking team scores, and scores can go negative', () => {
   const g = newGame();
   playTurn(g, ['skip', 'skip', 'one']);
   playTurn(g, ['three']);
@@ -173,23 +174,23 @@ test('review edits change the score before it is saved', () => {
   assert.deepEqual(G.scores(g), [4, 0]);
 });
 
-test('teams alternate and poets rotate within each team', () => {
-  const g = newGame({ gladPlayers: ['Ugg', 'Ogg', 'Zog'], madPlayers: ['Bo', 'Mo'] });
+test('teams alternate and talkers rotate within each team', () => {
+  const g = newGame({ pupsPlayers: ['Ana', 'Ben', 'Cy'], muttsPlayers: ['Dee', 'Eli'] });
   const order = [];
   for (let i = 0; i < 6; i++) {
-    order.push(`${g.teams[G.activeTeam(g)].name}:${G.poetFor(g)}`);
+    order.push(`${g.teams[G.activeTeam(g)].name}:${G.talkerFor(g)}`);
     playTurn(g, []);
   }
-  assert.deepEqual(order, ['Glad:Ugg', 'Mad:Bo', 'Glad:Ogg', 'Mad:Mo', 'Glad:Zog', 'Mad:Bo']);
+  assert.deepEqual(order, ['Pups:Ana', 'Mutts:Dee', 'Pups:Ben', 'Mutts:Eli', 'Pups:Cy', 'Mutts:Dee']);
 });
 
-test('choosing a different poet continues the rotation from them', () => {
-  const g = newGame({ gladPlayers: ['Ugg', 'Ogg', 'Zog'] });
-  G.choosePoet(g, 2);
-  assert.equal(G.poetFor(g), 'Zog');
+test('choosing a different talker continues the rotation from them', () => {
+  const g = newGame({ pupsPlayers: ['Ana', 'Ben', 'Cy'] });
+  G.chooseTalker(g, 2);
+  assert.equal(G.talkerFor(g), 'Cy');
   playTurn(g, []);
   playTurn(g, []);
-  assert.equal(G.poetFor(g), 'Ugg');
+  assert.equal(G.talkerFor(g), 'Ana');
 });
 
 test('the game ends after the last round and declares a winner', () => {
@@ -229,26 +230,26 @@ test('unlimited games only end when asked', () => {
 });
 
 test('rematch keeps teams, resets scores, restores planned rounds and swaps who starts', () => {
-  const g = newGame({ gladPlayers: ['Ugg'], settings: { rounds: 1 } });
+  const g = newGame({ pupsPlayers: ['Ana'], settings: { rounds: 1 } });
   playTurn(g, ['three']);
   playTurn(g, ['three']);
   G.addRound(g);
   const next = G.rematch(g);
   assert.equal(next.firstTeam, 1);
   assert.equal(next.settings.rounds, 1);
-  assert.deepEqual(next.teams[0].players, ['Ugg']);
+  assert.deepEqual(next.teams[0].players, ['Ana']);
   assert.deepEqual(G.scores(next), [0, 0]);
   assert.equal(G.activeTeam(next), 1);
 });
 
-test('stats name the top poet, best turn and most skips', () => {
-  const g = newGame({ gladPlayers: ['Ugg'], madPlayers: ['Bo'] });
+test('stats name the top dog, best turn and most skips', () => {
+  const g = newGame({ pupsPlayers: ['Ana'], muttsPlayers: ['Dee'] });
   playTurn(g, ['three', 'one', 'next', 'one', 'next']); // 3 + 1 + 1, then a card at the buzzer
   playTurn(g, ['skip', 'skip', 'one', 'next', 'one', 'next']); // -1 - 1 + 1 + 1, then a card at the buzzer
   const s = G.stats(g);
-  assert.equal(s.mvp.name, 'Ugg');
+  assert.equal(s.mvp.name, 'Ana');
   assert.equal(s.best.points, 5);
-  assert.equal(s.skipper.name, 'Bo');
+  assert.equal(s.skipper.name, 'Dee');
   assert.equal(s.skipper.skips, 2);
   assert.equal(s.threes, 1);
   assert.equal(s.cards, 9, 'includes the card on screen at each buzzer');
@@ -256,8 +257,44 @@ test('stats name the top poet, best turn and most skips', () => {
 
 test('restore rejects malformed and old-format saves', () => {
   assert.equal(G.restore(null), null);
-  assert.equal(G.restore({ v: 1, teams: [{}, {}], phase: 'ready' }), null);
-  assert.equal(G.restore({ v: 2, teams: [{}, {}], phase: 'turn', turn: null }), null);
+  assert.equal(G.restore({ v: 2, teams: [{}, {}], phase: 'ready' }), null);
+  assert.equal(G.restore({ v: 3, teams: [{}, {}], phase: 'turn', turn: null }), null);
   const g = newGame();
   assert.equal(G.restore(JSON.parse(JSON.stringify(g))).phase, 'ready');
+});
+
+test('round 1 is One syllable, then every other talk rule once before any repeats', () => {
+  const g = newGame({ settings: { rounds: 0 } });
+  const seen = [];
+  for (let round = 1; round <= TALK_RULES.length + 1; round++) seen.push(G.talkRuleFor(g, round));
+  assert.equal(seen[0], 'one-syllable');
+  assert.equal(new Set(seen.slice(0, TALK_RULES.length)).size, TALK_RULES.length);
+  assert.equal(seen[TALK_RULES.length], 'one-syllable', 'the order wraps around');
+});
+
+test('both teams play the same talk rule in a round, and each turn records it', () => {
+  const g = newGame({ settings: { rounds: 0 } });
+  const rules = [];
+  for (let i = 0; i < 6; i++) {
+    G.startTurn(g, 0, dealer());
+    rules.push(g.turn.rule);
+    G.endTurn(g);
+    G.finishTurn(g);
+  }
+  assert.equal(rules[0], rules[1]);
+  assert.equal(rules[2], rules[3]);
+  assert.equal(rules[4], rules[5]);
+  assert.notEqual(rules[1], rules[2]);
+  assert.deepEqual(g.turns.map((t) => t.rule), rules);
+});
+
+test('Classic mode uses One syllable every round', () => {
+  const g = newGame({ settings: { talk: 'classic' } });
+  for (let round = 1; round <= 10; round++) assert.equal(G.talkRuleFor(g, round), 'one-syllable');
+});
+
+test('the shuffle of talk rules follows the injected random source', () => {
+  const make = () =>
+    G.createGame({ teams: [{ name: 'A', players: [] }, { name: 'B', players: [] }], rng: () => 0.5 }).ruleOrder;
+  assert.deepEqual(make(), make());
 });

@@ -3,6 +3,7 @@ import { drawCard, freshCount } from './deck.js';
 import * as G from './game.js';
 import { load, save } from './storage.js';
 import { sfx, buzz, unlockAudio, setSoundEnabled } from './sound.js';
+import { TALK_RULES, ruleById } from './talk-rules.js';
 
 const app = document.getElementById('app');
 
@@ -14,12 +15,13 @@ const TIME_UP_MS = 1600;
 const TIPS = [
   'Once your team says a word, you can say it too.',
   'Got the top word? Tap it, then go for the 3. Your point is safe.',
-  'Judge: sit close and read every word on the card.',
+  'Ref: sit close and read every word on the card.',
   'Hands down. No acting, no pointing, no counting on fingers.',
   'Tapped the wrong word? Undo puts the card back.',
   'After each turn you can fix any card before it counts.',
   'The 3-point word often has the 1-point word inside it.',
-  'Broke a rule? The judge yells NO! and the card counts as a skip.',
+  'Broke the rule? The ref yells “Bad dog!” and the card counts as a skip.',
+  'Both teams play the same talk rule each round, so it stays fair.',
 ];
 
 const prefs = { sound: true, ...load('prefs', {}) };
@@ -72,7 +74,12 @@ const icons = {
   home: svg(`<path ${stroke} d="M4 11l8-7 8 7v8.5a.5.5 0 0 1-.5.5H15v-6H9v6H4.5a.5.5 0 0 1-.5-.5z"/>`),
 };
 
-const tally = (n) => `<span class="tally" aria-hidden="true">${'<i></i>'.repeat(n)}</span>`;
+const PAW =
+  '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
+  '<ellipse cx="5.2" cy="9.8" rx="2.1" ry="2.7"/><ellipse cx="9.4" cy="5.6" rx="2.1" ry="2.8"/>' +
+  '<ellipse cx="14.6" cy="5.6" rx="2.1" ry="2.8"/><ellipse cx="18.8" cy="9.8" rx="2.1" ry="2.7"/>' +
+  '<path d="M12 10.8c-2.9 0-6.2 3.6-6.2 6.5 0 1.9 1.6 2.9 3.2 2.3 1-.4 2-.8 3-.8s2 .4 3 .8c1.6.6 3.2-.4 3.2-2.3 0-2.9-3.3-6.5-6.2-6.5z"/></svg>';
+const paws = (n) => `<span class="paws" aria-hidden="true">${PAW.repeat(n)}</span>`;
 
 function seg(action, options, current, label) {
   return `<div class="seg" role="radiogroup">${options
@@ -218,21 +225,22 @@ function homeView() {
       <div class="home-hero">
         <h1 class="logo">
           <span class="logo-big" data-fit>It Dog</span>
-          <span class="logo-small">Small words. Big laughs.</span>
+          <span class="logo-small">Talk funny. Guess fast.</span>
         </h1>
-        <p class="tagline">The party game where the poet may only speak in words of one syllable.</p>
+        <p class="tagline">Get your team to guess the word before time runs out. The catch: every round deals a new rule for how you’re allowed to talk.</p>
         <figure class="demo" aria-label="Example card">
+          <span class="rule-chip">Round rule: Questions only</span>
           <div class="card card-mini">
             <div class="half half-one">
-              <div class="half-label">${tally(1)}<span>1 point</span></div>
+              <div class="half-label">${paws(1)}<span>1 point</span></div>
               <p class="word">Fire</p>
             </div>
             <div class="half half-three">
-              <div class="half-label">${tally(3)}<span>3 points</span></div>
+              <div class="half-label">${paws(3)}<span>3 points</span></div>
               <p class="word">Fireworks</p>
             </div>
           </div>
-          <figcaption class="bubble">“Hot. Bright. Go boom in sky at night.”</figcaption>
+          <figcaption class="bubble">“Is it hot? Does it go boom? Do you see it in July?”</figcaption>
         </figure>
       </div>
     </div>
@@ -266,7 +274,16 @@ function setupView() {
     <div class="scroll" data-key="setup">
       <div class="stack">
         ${d.teams.map(teamEditor).join('')}
-        <p class="hint">Player names are optional. Add them and the game tells you who is poet each turn.</p>
+        <p class="hint">Player names are optional. Add them and the game tells you who’s It each turn.</p>
+        <section class="field">
+          <h2 class="field-label">Talk rules</h2>
+          ${seg('set-draft-talk', ['mix', 'classic'], d.settings.talk, (v) => (v === 'mix' ? 'New rule each round' : 'One syllable only'))}
+          <p class="hint">${
+            d.settings.talk === 'mix'
+              ? 'Round 1 is one syllable. After that, each round deals a new rule like Questions only or Sing it.'
+              : 'Every round uses the one-syllable rule.'
+          }</p>
+        </section>
         <section class="field">
           <h2 class="field-label">Turn length</h2>
           ${seg('set-draft-seconds', [60, 90, 120], d.settings.seconds, (v) => `${v} sec`)}
@@ -341,7 +358,8 @@ function readyView() {
   const t = G.activeTeam(game);
   const team = game.teams[t];
   const opp = game.teams[G.other(game, t)];
-  const poet = G.poetFor(game, t);
+  const talker = G.talkerFor(game, t);
+  const rule = ruleById(G.talkRuleFor(game));
   const last = game.turns[game.turns.length - 1];
   let lastLine = '';
   if (last) {
@@ -359,23 +377,29 @@ function readyView() {
         <p class="eyebrow">Up next</p>
         <h1 class="team-title" data-fit>${esc(team.name)}</h1>
         ${
-          poet
-            ? `<p class="poet-line"><b>${esc(poet)}</b> is the poet</p>`
-            : `<p class="poet-line">Pick a poet from ${esc(team.name)}</p>`
+          talker
+            ? `<p class="talker-line"><b>${esc(talker)}</b> is It</p>`
+            : `<p class="talker-line">Pick who’s It on ${esc(team.name)}</p>`
         }
         ${
           team.players.length > 1
-            ? `<div class="poet-picker" role="radiogroup" aria-label="Change poet">${team.players
+            ? `<div class="talker-picker" role="radiogroup" aria-label="Change who is It">${team.players
                 .map(
                   (p, i) =>
-                    `<button type="button" role="radio" aria-checked="${p === poet}" class="${p === poet ? 'is-on' : ''}" data-action="pick-poet" data-index="${i}">${esc(p)}</button>`
+                    `<button type="button" role="radio" aria-checked="${p === talker}" class="${p === talker ? 'is-on' : ''}" data-action="pick-talker" data-index="${i}">${esc(p)}</button>`
                 )
                 .join('')}</div>`
             : ''
         }
+        <section class="rule-card" aria-label="Talk rule for this round">
+          <p class="eyebrow">Round ${G.currentRound(game)} talk rule</p>
+          <p class="rule-name">${rule.name}</p>
+          <p class="rule-text">${rule.text}</p>
+          <p class="rule-example"><span>Fireworks, this way:</span> ${rule.example}</p>
+        </section>
         <ol class="steps">
-          <li>Give the phone to ${poet ? esc(poet) : 'the poet'}.</li>
-          <li>One ${esc(opp.name)} player sits beside them to judge.</li>
+          <li>Give the phone to ${talker ? esc(talker) : 'whoever is It'}.</li>
+          <li>One ${esc(opp.name)} player sits beside them as the ref.</li>
           <li>The rest of ${esc(team.name)} gets ready to guess.</li>
         </ol>
         <p class="tip">${esc(TIPS[ui.tip % TIPS.length])}</p>
@@ -388,8 +412,9 @@ function readyView() {
     ${
       ui.countdown
         ? `<div class="overlay countdown">
-            <p class="eyebrow">${poet ? `${esc(poet)}, get ready` : 'Poet, get ready'}</p>
+            <p class="eyebrow">${talker ? `${esc(talker)}, get ready` : 'Get ready'}</p>
             <p class="countdown-num" aria-live="assertive">${ui.countdown}</p>
+            <p class="countdown-rule">${rule.name}</p>
             <button class="link-btn" data-action="cancel-countdown">Cancel</button>
           </div>`
         : ''
@@ -405,6 +430,7 @@ function turnView() {
   const paused = G.isPaused(turn) && !ui.timeUp;
   const low = left <= 10000;
   const banked = card?.banked;
+  const rule = ruleById(turn.rule);
   const isNew = turn.cards.length !== ui.shownCards;
   ui.shownCards = turn.cards.length;
   const fx = ui.fx;
@@ -412,27 +438,28 @@ function turnView() {
 
   return `<main class="screen turn t${turn.team} ${fx === 'skip' ? 'shake' : ''}">
     <header class="turn-top">
-      <div class="turn-team"><span class="team-dot"></span><span>${esc(team.name)}${turn.poet ? ` · ${esc(turn.poet)}` : ''}</span></div>
+      <div class="turn-team"><span class="team-dot"></span><span>${esc(team.name)}${turn.talker ? ` · ${esc(turn.talker)}` : ''}</span></div>
       <div class="clock ${low ? 'is-low' : ''}" id="clock" role="timer" aria-label="Time left">${fmtTime(left)}</div>
       <button class="icon-btn" data-action="pause" aria-label="Pause">${icons.pause}</button>
     </header>
     <div class="timebar ${low ? 'is-low' : ''}" aria-hidden="true"><i id="timefill" style="transform:scaleX(${left / turn.total})"></i></div>
+    <p class="rule-strip"><b>${rule.name}</b><span>${rule.text}</span></p>
     ${
       card && !paused
         ? `<section class="card ${banked ? 'is-banked' : ''} ${isNew ? 'enter' : ''}" aria-label="Card. Tap the word your team guessed.">
             ${
               banked
                 ? `<div class="half half-one">
-                    <span class="half-label">${tally(1)}<span>1 point</span><span class="tap-pill">Got it +1</span></span>
+                    <span class="half-label">${paws(1)}<span>1 point</span><span class="tap-pill">Got it +1</span></span>
                     <span class="word" data-fit data-fit-height>${esc(card.one)}</span>
                   </div>`
                 : `<button type="button" class="half half-one" data-action="one" aria-label="${esc(card.one)}. Tap when guessed for 1 point.">
-                    <span class="half-label">${tally(1)}<span>1 point</span><span class="tap-pill">Tap +1</span></span>
+                    <span class="half-label">${paws(1)}<span>1 point</span><span class="tap-pill">Tap +1</span></span>
                     <span class="word" data-fit data-fit-height>${esc(card.one)}</span>
                   </button>`
             }
             <button type="button" class="half half-three" data-action="three" aria-label="${esc(card.three)}. Tap when guessed for 3 points.">
-              <span class="half-label">${tally(3)}<span>3 points</span><span class="tap-pill">${banked ? 'Go for 3' : 'Tap +3'}</span></span>
+              <span class="half-label">${paws(3)}<span>3 points</span><span class="tap-pill">${banked ? 'Go for 3' : 'Tap +3'}</span></span>
               <span class="word" data-fit data-fit-height>${esc(card.three)}</span>
             </button>
           </section>`
@@ -501,11 +528,11 @@ function reviewView() {
     .join('');
   return `<main class="screen review t${turn.team}">
     <header class="review-head">
-      <p class="eyebrow">Turn over · ${esc(team.name)}${turn.poet ? ` · ${esc(turn.poet)}` : ''}</p>
+      <p class="eyebrow">Turn over · ${esc(team.name)}${turn.talker ? ` · ${esc(turn.talker)}` : ''}</p>
       <p class="review-total">${esc(team.name)} ${signed(G.turnPoints(turn))}</p>
       <p class="review-sub">${summary}</p>
     </header>
-    <p class="hint review-hint">Judge disagrees? Fix any card before it counts.</p>
+    <p class="hint review-hint">Ref disagrees? Fix any card before it counts.</p>
     <div class="scroll" data-key="review">
       ${turn.cards.length ? `<ul class="rv-list">${rows}</ul>` : '<p class="hint">No cards this turn.</p>'}
     </div>
@@ -527,10 +554,10 @@ function overView() {
   const award = (label, value, note) =>
     `<li class="award"><span class="eyebrow">${label}</span><span class="award-value">${value}</span><span class="award-note">${note}</span></li>`;
   const awards = [];
-  if (st.mvp?.points > 0) awards.push(award('Top poet', esc(st.mvp.name), `${plural(st.mvp.points, 'point')} for ${esc(game.teams[st.mvp.team].name)}`));
+  if (st.mvp?.points > 0) awards.push(award('Top dog', esc(st.mvp.name), `${plural(st.mvp.points, 'point')} for ${esc(game.teams[st.mvp.team].name)}`));
   if (st.best?.points > 0)
     awards.push(
-      award('Best turn', `${esc(game.teams[st.best.team].name)} ${signed(st.best.points)}`, `${st.best.poet ? `${esc(st.best.poet)}, ` : ''}round ${st.best.round}`)
+      award('Best turn', `${esc(game.teams[st.best.team].name)} ${signed(st.best.points)}`, `${st.best.talker ? `${esc(st.best.talker)}, ` : ''}round ${st.best.round}`)
     );
   if (st.skipper) awards.push(award('Most skips', esc(st.skipper.name), plural(st.skipper.skips, 'skip')));
   awards.push(award('Cards played', st.cards, `${st.threes} for 3 points`));
@@ -540,7 +567,7 @@ function overView() {
       <div class="over-head">
         <p class="eyebrow">Game over · ${plural(rounds, 'round')}</p>
         <h1 class="winner" data-fit>${w ? `${esc(w.name)} win!` : 'Tie!'}</h1>
-        <p class="grunt">${w ? `${esc(w.name)} happy. ${esc(l.name)} sad.` : 'Same score. Both good. Both bad.'}</p>
+        <p class="over-line">${w ? `Treats for ${esc(w.name)}. ${esc(l.name)}, sit. Stay. Try again.` : 'Same score. Everybody gets a treat.'}</p>
       </div>
       ${scoreboard(scores, winner)}
       <ul class="awards">${awards.join('')}</ul>
@@ -574,14 +601,18 @@ function sheetView() {
 
 function rulesSheet() {
   return `<ol class="rules">
-    <li><b>Teams take turns.</b> On your turn you are the poet. Get your own team to guess as many cards as you can before time runs out.</li>
-    <li><b>Words of one syllable only.</b> “Big rock fall from sky. Go boom.” is fine. Say “meteor” and you get bonked.</li>
+    <li><b>Teams take turns.</b> On your turn you’re It: get your own team to guess as many cards as you can before time runs out.</li>
+    <li><b>Every round has a talk rule.</b> It’s shown before each turn and stays on screen. Both teams play the same rule that round. Round 1 is always One syllable.</li>
     <li><b>No tricks.</b> No gestures or acting, no “sounds like” or “rhymes with”, no spelling, initials or other languages. Never say any part of the word on the card. Once your team says a word, you may use it.</li>
     <li><b>Tap the word they guess.</b> The top word is easier and worth 1 point. The bottom word is harder and worth 3. When your team gets the top word, tap it: the card stays up so you can go for the 3. Tap the bottom word if they get it (a card is worth 3 at most), or tap Next to keep your point and move on. You can also go straight for the 3.</li>
     <li><b>Skipping costs 1 point.</b> Stuck? Tap Skip and your team loses a point, plus any point already on that card.</li>
-    <li><b>The judge.</b> A player from the other team sits beside the poet and watches the card. Break a rule and they yell “NO!” and bonk you (gently). The card counts as a skip.</li>
+    <li><b>The ref.</b> A player from the other team sits beside you and watches the card. Break the talk rule or a no-tricks rule and they yell “Bad dog!”. The card counts as a skip.</li>
     <li><b>Winning.</b> Most points after the last round wins.</li>
   </ol>
+  <h3 class="sheet-subtitle">The talk rules</h3>
+  <ul class="rule-list">
+    ${TALK_RULES.map((r) => `<li><b>${r.name}</b><span>${r.text}</span></li>`).join('')}
+  </ul>
   <p class="hint">Tapped the wrong word? Undo puts the card back. After each turn you can fix any card before the score is saved.</p>`;
 }
 
@@ -717,7 +748,7 @@ function press(kind) {
   if (now < lockUntil || ui.timeUp) return;
   const outcome = G.act(game, kind, drawFromDeck);
   if (!outcome) return;
-  // Ignore ghost double taps. When a new card appears under the poet's thumb,
+  // Ignore ghost double taps. When a new card appears under the talker's thumb,
   // wait a little longer so nobody scores it by accident.
   lockUntil = now + (outcome === 'dealt' ? 350 : 150);
   ui.fx = kind === 'next' ? null : kind;
@@ -740,6 +771,7 @@ function newDraft(fromGame) {
     settings: {
       seconds: source?.settings?.seconds ?? G.DEFAULT_SETTINGS.seconds,
       rounds: source?.settings?.rounds ?? G.DEFAULT_SETTINGS.rounds,
+      talk: source?.settings?.talk ?? G.DEFAULT_SETTINGS.talk,
     },
   };
 }
@@ -810,6 +842,10 @@ const actions = {
     ui.draft.settings.seconds = Number(d.value);
     render();
   },
+  'set-draft-talk'(d) {
+    ui.draft.settings.talk = d.value;
+    render();
+  },
   'set-draft-rounds'(d) {
     ui.draft.settings.rounds = Number(d.value);
     render();
@@ -836,8 +872,8 @@ const actions = {
   },
 
   // Between turns
-  'pick-poet'(d) {
-    G.choosePoet(game, Number(d.index));
+  'pick-talker'(d) {
+    G.chooseTalker(game, Number(d.index));
     commit();
   },
   'start-turn': startTurn,
@@ -1005,7 +1041,7 @@ document.addEventListener('visibilitychange', () => {
 
 if (game) {
   if (game.phase === 'turn') {
-    // Reloaded mid-turn: hold the clock until the poet is ready again.
+    // Reloaded mid-turn: hold the clock until the talker is ready again.
     G.pause(game, Date.now());
     if (G.timeLeft(game.turn, Date.now()) <= 0) G.endTurn(game);
     save('game', game);

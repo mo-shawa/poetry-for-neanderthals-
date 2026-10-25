@@ -2,7 +2,7 @@
   "name": "it-dog",
   "version": "1.0.0",
   "private": true,
-  "description": "Pass-the-phone party game: describe the word using only words of one syllable.",
+  "description": "Pass-the-phone party game: guess the word while every round changes how you're allowed to talk.",
   "type": "module",
   "scripts": {
     "start": "python3 -m http.server 8080",
