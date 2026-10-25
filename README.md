@@ -3,7 +3,7 @@
 A pass-the-phone party game. Whoever is It gets their team to guess the word on
 a card before time runs out. The catch: every round deals a talk rule (one
 syllable, questions only, sing everything...) and a player from the other team
-watches as the ref, ready to yell "Bad dog!".
+watches as the ref, ready to yell "Busted!".
 
 One phone runs the whole game: no accounts, no network needed once it has loaded.
 
@@ -38,7 +38,7 @@ branch → `main` / root). There is no build step.
      (with or without the top word first; 3 is the most a card can earn).
    - **Next** (appears once the top word is in): keep the +1 and move on.
    - **Skip**: **−1**, and any point already on the card is lost. If the talker
-     breaks a rule, the ref yells "Bad dog!" and the card is skipped.
+     breaks a rule, the ref yells "Busted!" and the card is skipped.
    - If time runs out while going for the 3, the +1 is kept.
    - Each tap has its own sound: a ding, a swish for Next, a drum-and-fanfare,
      and a sad trombone.
@@ -47,7 +47,7 @@ branch → `main` / root). There is no build step.
 4. **Review.** After the buzzer, every card from the turn is listed. Fix any
    result the ref disputes (including a guess right on the buzzer) before the
    turn is saved.
-5. **Game over.** Winner, final score, top dog, best turn and most skips.
+5. **Game over.** Winner, final score, MVP, best turn and most skips.
    Tied? Play a tiebreaker round. Rematch keeps the teams and swaps who starts.
 
 The in-game menu lets you change turn length and rounds mid-game, fix the

@@ -20,7 +20,7 @@ const TIPS = [
   'Tapped the wrong word? Undo puts the card back.',
   'After each turn you can fix any card before it counts.',
   'The 3-point word often has the 1-point word inside it.',
-  'Broke the rule? The ref yells “Bad dog!” and the card counts as a skip.',
+  'Broke the rule? The ref yells “Busted!” and the card counts as a skip.',
   'Both teams play the same talk rule each round, so it stays fair.',
 ];
 
@@ -549,7 +549,7 @@ function overView() {
   const award = (label, value, note) =>
     `<li class="award"><span class="eyebrow">${label}</span><span class="award-value">${value}</span><span class="award-note">${note}</span></li>`;
   const awards = [];
-  if (st.mvp?.points > 0) awards.push(award('Top dog', esc(st.mvp.name), `${plural(st.mvp.points, 'point')} for ${esc(game.teams[st.mvp.team].name)}`));
+  if (st.mvp?.points > 0) awards.push(award('MVP', esc(st.mvp.name), `${plural(st.mvp.points, 'point')} for ${esc(game.teams[st.mvp.team].name)}`));
   if (st.best?.points > 0)
     awards.push(
       award('Best turn', `${esc(game.teams[st.best.team].name)} ${signed(st.best.points)}`, `${st.best.talker ? `${esc(st.best.talker)}, ` : ''}round ${st.best.round}`)
@@ -562,7 +562,7 @@ function overView() {
       <div class="over-head">
         <p class="eyebrow">Game over · ${plural(rounds, 'round')}</p>
         <h1 class="winner" data-fit>${w ? `${esc(w.name)} win!` : 'Tie!'}</h1>
-        <p class="over-line">${w ? `Treats for ${esc(w.name)}. ${esc(l.name)}, sit. Stay. Try again.` : 'Same score. Everybody gets a treat.'}</p>
+        <p class="over-line">${w ? `${esc(l.name)}, run it back?` : 'Dead even.'}</p>
       </div>
       ${scoreboard(scores, winner)}
       <ul class="awards">${awards.join('')}</ul>
@@ -601,7 +601,7 @@ function rulesSheet() {
     <li><b>No tricks.</b> No gestures or acting, no “sounds like” or “rhymes with”, no spelling, initials or other languages. Never say any part of the word on the card. Once your team says a word, you may use it.</li>
     <li><b>Tap the word they guess.</b> The top word is easier and worth 1 point. The bottom word is harder and worth 3. When your team gets the top word, tap it: the card stays up so you can go for the 3. Tap the bottom word if they get it (a card is worth 3 at most), or tap Next to keep your point and move on. You can also go straight for the 3.</li>
     <li><b>Skipping costs 1 point.</b> Stuck? Tap Skip and your team loses a point, plus any point already on that card.</li>
-    <li><b>The ref.</b> A player from the other team sits beside you and watches the card. Break the talk rule or a no-tricks rule and they yell “Bad dog!”. The card counts as a skip.</li>
+    <li><b>The ref.</b> A player from the other team sits beside you and watches the card. Break the talk rule or a no-tricks rule and they yell “Busted!”. The card counts as a skip.</li>
     <li><b>Winning.</b> Most points after the last round wins.</li>
   </ol>
   <h3 class="sheet-subtitle">The talk rules</h3>
