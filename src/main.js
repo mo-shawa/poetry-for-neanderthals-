@@ -13,7 +13,7 @@ const TIME_UP_MS = 1600;
 
 const TIPS = [
   'Once your team says a word, you can say it too.',
-  'Got the top word but think you can get the 3? Hold off and keep going.',
+  'Got the top word? Tap it, then go for the 3. Your point is safe.',
   'Judge: sit close and read every word on the card.',
   'Hands down. No acting, no pointing, no counting on fingers.',
   'Tapped the wrong word? Undo puts the card back.',
@@ -404,6 +404,7 @@ function turnView() {
   const left = G.timeLeft(turn, Date.now());
   const paused = G.isPaused(turn) && !ui.timeUp;
   const low = left <= 10000;
+  const banked = card?.banked;
   const isNew = turn.cards.length !== ui.shownCards;
   ui.shownCards = turn.cards.length;
   const fx = ui.fx;
@@ -418,13 +419,20 @@ function turnView() {
     <div class="timebar ${low ? 'is-low' : ''}" aria-hidden="true"><i id="timefill" style="transform:scaleX(${left / turn.total})"></i></div>
     ${
       card && !paused
-        ? `<section class="card ${isNew ? 'enter' : ''}" aria-label="Card. Tap the word your team guessed.">
-            <button type="button" class="half half-one" data-action="one" aria-label="${esc(card.one)}. Tap when guessed for 1 point.">
-              <span class="half-label">${tally(1)}<span>1 point</span><span class="tap-pill">Tap +1</span></span>
-              <span class="word" data-fit data-fit-height>${esc(card.one)}</span>
-            </button>
+        ? `<section class="card ${banked ? 'is-banked' : ''} ${isNew ? 'enter' : ''}" aria-label="Card. Tap the word your team guessed.">
+            ${
+              banked
+                ? `<div class="half half-one">
+                    <span class="half-label">${tally(1)}<span>1 point</span><span class="tap-pill">Got it +1</span></span>
+                    <span class="word" data-fit data-fit-height>${esc(card.one)}</span>
+                  </div>`
+                : `<button type="button" class="half half-one" data-action="one" aria-label="${esc(card.one)}. Tap when guessed for 1 point.">
+                    <span class="half-label">${tally(1)}<span>1 point</span><span class="tap-pill">Tap +1</span></span>
+                    <span class="word" data-fit data-fit-height>${esc(card.one)}</span>
+                  </button>`
+            }
             <button type="button" class="half half-three" data-action="three" aria-label="${esc(card.three)}. Tap when guessed for 3 points.">
-              <span class="half-label">${tally(3)}<span>3 points</span><span class="tap-pill">Tap +3</span></span>
+              <span class="half-label">${tally(3)}<span>3 points</span><span class="tap-pill">${banked ? 'Go for 3' : 'Tap +3'}</span></span>
               <span class="word" data-fit data-fit-height>${esc(card.three)}</span>
             </button>
           </section>`
@@ -434,7 +442,14 @@ function turnView() {
       <button class="link-btn" data-action="undo" ${turn.undo.length ? '' : 'disabled'}>${icons.undo}Undo</button>
       <p class="turn-score" aria-label="Points this turn">${esc(team.name)} ${signed(G.turnPoints(turn))}</p>
     </div>
-    <button class="btn act-skip" data-action="skip"><b>Skip</b><small>−1 point</small></button>
+    ${
+      banked
+        ? `<div class="turn-actions">
+            <button class="btn act-skip" data-action="skip"><b>Skip</b><small>−1 point</small></button>
+            <button class="btn btn-primary act-next" data-action="next"><b>Next</b><small>Keep +1</small></button>
+          </div>`
+        : '<button class="btn act-skip" data-action="skip"><b>Skip</b><small>−1 point</small></button>'
+    }
     ${fxLabel ? `<div class="fx fx-${fx}" aria-hidden="true">${fxLabel}</div>` : ''}
     ${
       paused
@@ -562,8 +577,8 @@ function rulesSheet() {
     <li><b>Teams take turns.</b> On your turn you are the poet. Get your own team to guess as many cards as you can before time runs out.</li>
     <li><b>Words of one syllable only.</b> “Big rock fall from sky. Go boom.” is fine. Say “meteor” and you get bonked.</li>
     <li><b>No tricks.</b> No gestures or acting, no “sounds like” or “rhymes with”, no spelling, initials or other languages. Never say any part of the word on the card. Once your team says a word, you may use it.</li>
-    <li><b>Tap the word they guess.</b> The top word is easier and worth 1 point. The bottom word is harder and worth 3. Go for either one, and tap whichever word your team says.</li>
-    <li><b>Skipping costs 1 point.</b> Stuck? Tap Skip and your team loses a point.</li>
+    <li><b>Tap the word they guess.</b> The top word is easier and worth 1 point. The bottom word is harder and worth 3. When your team gets the top word, tap it: the card stays up so you can go for the 3. Tap the bottom word if they get it (a card is worth 3 at most), or tap Next to keep your point and move on. You can also go straight for the 3.</li>
+    <li><b>Skipping costs 1 point.</b> Stuck? Tap Skip and your team loses a point, plus any point already on that card.</li>
     <li><b>The judge.</b> A player from the other team sits beside the poet and watches the card. Break a rule and they yell “NO!” and bonk you (gently). The card counts as a skip.</li>
     <li><b>Winning.</b> Most points after the last round wins.</li>
   </ol>
@@ -694,17 +709,18 @@ function startTurn() {
   countdownTimer = setTimeout(step, COUNTDOWN_STEP_MS);
 }
 
-const SOUNDS = { one: sfx.one, three: sfx.three, skip: sfx.skip };
-const BUZZ = { one: 25, three: [30, 40, 30, 40, 30], skip: 90 };
+const SOUNDS = { one: sfx.one, next: sfx.next, three: sfx.three, skip: sfx.skip };
+const BUZZ = { one: 25, next: 15, three: [30, 40, 30, 40, 30], skip: 90 };
 
 function press(kind) {
   const now = performance.now();
   if (now < lockUntil || ui.timeUp) return;
-  if (!G.act(game, kind, drawFromDeck)) return;
-  // A new card just appeared under the poet's thumb: ignore taps for a moment
-  // so a double tap can't score it by accident.
-  lockUntil = now + 350;
-  ui.fx = kind;
+  const outcome = G.act(game, kind, drawFromDeck);
+  if (!outcome) return;
+  // Ignore ghost double taps. When a new card appears under the poet's thumb,
+  // wait a little longer so nobody scores it by accident.
+  lockUntil = now + (outcome === 'dealt' ? 350 : 150);
+  ui.fx = kind === 'next' ? null : kind;
   SOUNDS[kind]();
   buzz(BUZZ[kind]);
   commit();
@@ -830,6 +846,7 @@ const actions = {
   // During a turn
   one: () => press('one'),
   three: () => press('three'),
+  next: () => press('next'),
   skip: () => press('skip'),
   undo() {
     if (!G.undo(game)) return;
@@ -955,7 +972,7 @@ app.addEventListener('submit', (e) => {
   document.getElementById(`add-player-${t}`)?.focus();
 });
 
-// Keyboard shortcuts, handy on a laptop: 1, 3, S (skip), U (undo), space (pause).
+// Keyboard shortcuts, handy on a laptop: 1, 3, N (next), S (skip), U (undo), space (pause).
 document.addEventListener('keydown', (e) => {
   if (e.target.closest?.('input, textarea')) return;
   if (e.key === 'Escape' && ui.sheet) return actions['close-sheet']();
@@ -967,7 +984,7 @@ document.addEventListener('keydown', (e) => {
     return paused ? actions.resume() : actions.pause();
   }
   if (paused) return;
-  const map = { 1: 'one', 3: 'three', s: 'skip', u: 'undo' };
+  const map = { 1: 'one', 3: 'three', n: 'next', s: 'skip', u: 'undo' };
   if (map[key]) actions[map[key]]();
 });
 

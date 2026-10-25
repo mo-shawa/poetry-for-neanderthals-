@@ -1157,6 +1157,30 @@ button.half:active .tap-pill {
   font-size: 32px;
 }
 
+.turn-actions {
+  flex: none;
+  display: flex;
+  gap: 10px;
+}
+
+.turn-actions .btn {
+  min-height: 66px;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.turn-actions .act-skip {
+  flex: 1 1 0;
+}
+
+.turn-actions .act-next {
+  flex: 1.6 1 0;
+}
+
+.act-next b {
+  font-size: 32px;
+}
+
 .act-skip small {
   font-size: 13px;
   opacity: 0.7;
@@ -1257,6 +1281,30 @@ button.half:active .tap-pill {
 
 .shake {
   animation: shake 0.42s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+.card.is-banked .half-one {
+  background: var(--team);
+  color: var(--team-ink);
+}
+
+.card.is-banked .half-one .half-label,
+.card.is-banked .half-one .tally {
+  color: inherit;
+}
+
+.card.is-banked .half-one .tap-pill {
+  background: var(--team-ink);
+  color: var(--team);
+}
+
+.card.is-banked .half-one .word {
+  opacity: 0.7;
+}
+
+.card.is-banked .half-three {
+  box-shadow: inset 0 0 0 4px var(--team);
+  animation: go-for-three 1.4s ease-in-out infinite;
 }
 
 .turn .half-one .word {
@@ -1655,6 +1703,12 @@ button.half:active .tap-pill {
   }
 }
 
+@keyframes go-for-three {
+  50% {
+    box-shadow: inset 0 0 0 9px var(--team);
+  }
+}
+
 @keyframes throb {
   50% {
     transform: scale(1.12);
@@ -1692,7 +1746,8 @@ button.half:active .tap-pill {
 
 /* Short phones: tighten the turn screen so the card keeps its room. */
 @media (max-height: 640px) {
-  .turn .act-skip {
+  .turn .act-skip,
+  .turn-actions .btn {
     min-height: 56px;
   }
   .clock {

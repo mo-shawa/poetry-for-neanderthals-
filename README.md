@@ -29,12 +29,16 @@ branch → `main` / root). There is no build step.
    poet. Someone from the other team sits beside the poet as judge.
 3. **The turn.** After a 3-2-1 countdown the card appears with the easier
    word on top and the harder word below.
-   - **Tap the top word** when the team guesses it: **+1**.
-   - **Tap the bottom word** when the team guesses it: **+3**.
-   - **Skip** (the button under the card): **−1**. If the poet breaks a rule,
-     the judge yells NO! and the card is skipped.
-   - Each of the three has its own sound: a ding, a drum-and-fanfare, and a
-     sad trombone.
+   - **Tap the top word** when the team guesses it: **+1**. The card stays up
+     so the poet can go for the 3.
+   - **Tap the bottom word** when the team guesses it: the card is worth **3**
+     (with or without the top word first; 3 is the most a card can earn).
+   - **Next** (appears once the top word is in): keep the +1 and move on.
+   - **Skip**: **−1**, and any point already on the card is lost. If the poet
+     breaks a rule, the judge yells NO! and the card is skipped.
+   - If time runs out while going for the 3, the +1 is kept.
+   - Each tap has its own sound: a ding, a swish for Next, a drum-and-fanfare,
+     and a sad trombone.
    - **Undo** reverses the last tap and puts the card back.
    - **Pause** hides the card and stops the clock. Leaving the app also pauses.
 4. **Review.** After the buzzer, every card from the turn is listed. Fix any
@@ -66,7 +70,8 @@ straight away, and the seen history of existing cards is kept.
   brings you back to a paused turn.
 - Large tap targets in thumb reach, a guard against accidental double taps, and
   a layout that fits small phones without scrolling during a turn.
-- Laptop shortcuts during a turn: `1`, `3`, `S` (skip), `U` (undo), space (pause).
+- Laptop shortcuts during a turn: `1`, `3`, `N` (next), `S` (skip), `U` (undo),
+  space (pause).
 
 ## Code
 

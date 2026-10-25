@@ -27,15 +27,58 @@ function playTurn(g, presses, draw = dealer()) {
   G.finishTurn(g);
 }
 
-test('tapping the top word scores 1, the bottom word 3, and skip costs 1', () => {
+test('tapping the top word banks 1 point and keeps the card up', () => {
   const g = newGame();
   const draw = dealer();
   G.startTurn(g, 0, draw);
-  assert.equal(G.act(g, 'one', draw), true);
-  assert.equal(G.currentCard(g.turn).one, 'Word2', 'every tap deals the next card');
+  assert.equal(G.act(g, 'one', draw), 'banked');
+  assert.equal(G.currentCard(g.turn).one, 'Word1');
+  assert.equal(G.turnPoints(g.turn), 1, 'the banked point shows in the live score');
+  assert.equal(G.act(g, 'one', draw), null, 'tapping the top word again does nothing');
+  assert.equal(G.act(g, 'next', draw), 'dealt');
+  assert.equal(G.currentCard(g.turn).one, 'Word2');
+  assert.equal(g.turn.cards[0].result, 'one');
+  assert.equal(G.turnPoints(g.turn), 1);
+});
+
+test('Next does nothing until the top word is banked', () => {
+  const g = newGame();
+  const draw = dealer();
+  G.startTurn(g, 0, draw);
+  assert.equal(G.act(g, 'next', draw), null);
+  assert.equal(g.turn.cards.length, 1);
+});
+
+test('getting the bottom word after the top one makes the card worth 3, not 4', () => {
+  const g = newGame();
+  const draw = dealer();
+  G.startTurn(g, 0, draw);
+  G.act(g, 'one', draw);
   G.act(g, 'three', draw);
+  assert.equal(g.turn.cards[0].result, 'three');
+  assert.equal(G.turnPoints(g.turn), 3);
+});
+
+test('going straight for the bottom word scores 3', () => {
+  const g = newGame();
+  const draw = dealer();
+  G.startTurn(g, 0, draw);
+  assert.equal(G.act(g, 'three', draw), 'dealt');
+  assert.equal(G.turnPoints(g.turn), 3);
+});
+
+test('skip costs 1, and skipping a banked card loses its point too', () => {
+  const g = newGame();
+  const draw = dealer();
+  G.startTurn(g, 0, draw);
   G.act(g, 'skip', draw);
-  assert.equal(G.turnPoints(g.turn), 1 + 3 - 1);
+  G.act(g, 'one', draw);
+  G.act(g, 'skip', draw);
+  assert.deepEqual(
+    g.turn.cards.map((c) => c.result),
+    ['skip', 'skip', null]
+  );
+  assert.equal(G.turnPoints(g.turn), -2);
 });
 
 test('only the poet team scores, and scores can go negative', () => {
@@ -49,17 +92,36 @@ test('unknown actions are ignored', () => {
   const g = newGame();
   const draw = dealer();
   G.startTurn(g, 0, draw);
-  assert.equal(G.act(g, 'no', draw), false);
+  assert.equal(G.act(g, 'no', draw), null);
   assert.equal(g.turn.cards.length, 1);
 });
 
-test('the card on screen when time runs out scores nothing', () => {
+test('at the buzzer a banked card keeps its point and any other card scores nothing', () => {
   const g = newGame();
   G.startTurn(g, 0, dealer());
   G.endTurn(g);
   assert.equal(g.turn.cards[0].result, 'none');
   assert.equal(g.turn.cards[0].timedOut, true);
   assert.equal(G.turnPoints(g.turn), 0);
+
+  const banked = newGame();
+  const draw = dealer();
+  G.startTurn(banked, 0, draw);
+  G.act(banked, 'one', draw);
+  G.endTurn(banked);
+  assert.equal(banked.turn.cards[0].result, 'one');
+  assert.equal(G.turnPoints(banked.turn), 1);
+});
+
+test('undo un-banks the top word without touching the deck', () => {
+  const g = newGame();
+  const draw = dealer();
+  G.startTurn(g, 0, draw);
+  G.act(g, 'one', draw);
+  G.undo(g);
+  assert.equal(G.currentCard(g.turn).banked, false);
+  assert.equal(g.turn.cards.length, 1);
+  assert.equal(g.turn.queue.length, 0);
 });
 
 test('undo restores the previous card and re-deals the card that was on screen', () => {
@@ -82,7 +144,7 @@ test('undo after a re-deal does not duplicate the card', () => {
   G.startTurn(g, 0, draw);
   G.act(g, 'skip', draw); // Word2 on screen
   G.undo(g); // Word2 queued
-  G.act(g, 'one', draw); // Word2 dealt from the queue
+  G.act(g, 'three', draw); // Word2 dealt from the queue
   G.undo(g); // Word2 queued again
   assert.deepEqual(g.turn.queue, [['Word2', 'Phrase2']]);
 });
@@ -92,7 +154,7 @@ test('presses are ignored while paused', () => {
   const draw = dealer();
   G.startTurn(g, 0, draw);
   G.pause(g, 30_000);
-  assert.equal(G.act(g, 'three', draw), false);
+  assert.equal(G.act(g, 'three', draw), null);
   assert.equal(G.timeLeft(g.turn, 999_999), 60_000);
   G.resume(g, 100_000);
   assert.equal(G.timeLeft(g.turn, 110_000), 50_000);
@@ -181,8 +243,8 @@ test('rematch keeps teams, resets scores, restores planned rounds and swaps who 
 
 test('stats name the top poet, best turn and most skips', () => {
   const g = newGame({ gladPlayers: ['Ugg'], madPlayers: ['Bo'] });
-  playTurn(g, ['three', 'one', 'one']);
-  playTurn(g, ['skip', 'skip', 'one', 'one']);
+  playTurn(g, ['three', 'one', 'next', 'one', 'next']); // 3 + 1 + 1, then a card at the buzzer
+  playTurn(g, ['skip', 'skip', 'one', 'next', 'one', 'next']); // -1 - 1 + 1 + 1, then a card at the buzzer
   const s = G.stats(g);
   assert.equal(s.mvp.name, 'Ugg');
   assert.equal(s.best.points, 5);

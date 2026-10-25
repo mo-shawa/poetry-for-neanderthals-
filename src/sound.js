@@ -111,6 +111,12 @@ export const sfx = {
       tone({ freq: 880, type: 'sine', dur: 0.09, vol: 0.25 });
       tone({ freq: 1320, type: 'sine', dur: 0.22, vol: 0.22, delay: 0.07 });
     }),
+  // Next (keeping the top word): a quick swish up.
+  next: () =>
+    play(() => {
+      noise({ dur: 0.12, vol: 0.18, freq: 700, to: 3200, q: 3, type: 'bandpass' });
+      tone({ freq: 660, to: 990, type: 'triangle', dur: 0.12, vol: 0.14 });
+    }),
   // Bottom word: a drum thump, a rising fanfare and a sparkle on top.
   three: () =>
     play(() => {

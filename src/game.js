@@ -2,10 +2,12 @@
 // returns the next [onePointWord, threePointWord] card.
 //
 // Card results, all scored for the poet's team:
-//   'one'   guessed the top word: +1
-//   'three' guessed the bottom word: +3
+//   'one'   got the top word: +1
+//   'three' got the bottom word: +3 (a card is worth 3 at most)
 //   'skip'  skipped, or the poet broke a rule: -1
 //   'none'  no score (time ran out mid-card, or set in review)
+// While the poet goes for the bottom word after getting the top one, the card
+// is "banked": it counts as 'one' until something else happens.
 
 export const DEFAULT_SETTINGS = { seconds: 90, rounds: 5 };
 export const DEFAULT_TEAM_NAMES = ['Glad', 'Mad'];
@@ -67,7 +69,7 @@ export function choosePoet(g, index) {
 /** Points the poet's team earned in one turn (finished or in progress). */
 export function turnPoints(turn) {
   let pts = 0;
-  for (const card of turn.cards) pts += POINTS[card.result] ?? 0;
+  for (const card of turn.cards) pts += POINTS[card.result ?? (card.banked ? 'one' : 'none')] ?? 0;
   return pts;
 }
 
@@ -114,7 +116,7 @@ export function startTurn(g, now, draw) {
 
 function deal(turn, draw) {
   const [one, three] = turn.queue.shift() ?? draw();
-  turn.cards.push({ one, three, result: null });
+  turn.cards.push({ one, three, result: null, banked: false });
 }
 
 /** The card on screen, or null once the turn is over. */
@@ -124,22 +126,32 @@ export function currentCard(turn) {
 }
 
 /**
- * Score the card on screen and deal the next one.
- *   'one'   the team guessed the top word
- *   'three' the team guessed the bottom word
- *   'skip'  give up on the card (also used when the poet breaks a rule)
- * Returns true if the press counted.
+ * Apply a press on the card on screen.
+ *   'one'   the team got the top word: bank +1 and keep the card up so the
+ *           poet can go for the bottom word
+ *   'next'  keep the banked +1 and move on
+ *   'three' the team got the bottom word: the card is worth 3
+ *   'skip'  give up on the card, or the poet broke a rule: -1, and any
+ *           banked point is lost
+ * Returns 'banked' or 'dealt', or null when the press did nothing.
  */
 export function act(g, action, draw) {
   const turn = g.turn;
-  if (g.phase !== 'turn' || !turn || turn.left !== null) return false;
+  if (g.phase !== 'turn' || !turn || turn.left !== null) return null;
   const card = currentCard(turn);
-  if (!card || !['one', 'three', 'skip'].includes(action)) return false;
+  if (!card) return null;
+  const allowed =
+    action === 'three' || action === 'skip' || (action === 'one' && !card.banked) || (action === 'next' && card.banked);
+  if (!allowed) return null;
   turn.undo.push(JSON.stringify(turn.cards));
   if (turn.undo.length > MAX_UNDO) turn.undo.shift();
-  card.result = action;
+  if (action === 'one') {
+    card.banked = true;
+    return 'banked';
+  }
+  card.result = action === 'next' ? 'one' : action;
   deal(turn, draw);
-  return true;
+  return 'dealt';
 }
 
 /** Undo the last press in this turn: the previous card comes back. */
@@ -176,13 +188,13 @@ export function resume(g, now) {
   turn.left = null;
 }
 
-/** Time's up (or the poet ended early). The card on screen scores nothing. */
+/** Time's up (or the poet ended early). A banked card keeps its 1 point. */
 export function endTurn(g) {
   const turn = g.turn;
   if (g.phase !== 'turn' || !turn) return;
   const card = currentCard(turn);
   if (card) {
-    card.result = 'none';
+    card.result = card.banked ? 'one' : 'none';
     card.timedOut = true;
   }
   turn.left = 0;
